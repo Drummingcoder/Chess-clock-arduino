@@ -1,3 +1,4 @@
+#include <EEPROM.h>
 #include <LiquidCrystal.h>
 
 // LCD Pins, initializing screen
@@ -29,6 +30,26 @@ void setup() {
   pinMode(buzzer, OUTPUT);
   lcd.begin(16, 2);
   promptForSettings();
+  if (EEPROM.read(0) != 255)
+  {
+    player1Minutes = EEPROM.read(0);
+  }
+  if (EEPROM.read(1) != 255)
+  {
+    player1Seconds = EEPROM.read(1);
+  }
+  if (EEPROM.read(2) != 255)
+  {
+    player2Minutes = EEPROM.read(2);
+  }
+  if (EEPROM.read(3) != 255)
+  {
+    player2Seconds = EEPROM.read(3);
+  }
+  if (EEPROM.read(4) != 255)
+  {
+    increment = EEPROM.read(4);
+  }
 }
 
 void loop() {
@@ -132,6 +153,7 @@ void loop() {
 
 void checkSetupButtons() {
   if (buttonP3pressed) {
+    lcd.clear();
     if (setupNumber < 1) {
       setupNumber++;
     }
@@ -150,10 +172,16 @@ void checkSetupButtons() {
     }
     else {
       gameRunning = true;
+      EEPROM.write(0, player1Minutes);
+  	  EEPROM.write(1, player1Seconds);
+  	  EEPROM.write(2, player2Minutes);
+  	  EEPROM.write(3, player2Seconds);
+  	  EEPROM.write(4, increment);
     }
     delay(500);
   }
   if (buttonP2pressed) {
+    lcd.clear();
     if (setupPlayer == 0) {
       if (setupNumber == 0) {
         player1Minutes++;
@@ -181,6 +209,7 @@ void checkSetupButtons() {
     }
   }
   if (buttonP1pressed) {
+    lcd.clear();
     if (setupPlayer == 0) {
       if (setupNumber == 0) {
         player1Minutes--;
@@ -219,7 +248,6 @@ void checkSetupButtons() {
 void promptForSettings() {
   const char* labels[] = {"Minutes: ", "Seconds: ", "Increment: "};
   const char* player[] = {"Player 1: ", "Player 2: ", "Both: "};
-  lcd.clear();
   lcd.setCursor(0,0);
   lcd.print(player[setupPlayer]);
   lcd.setCursor(0,1);
@@ -294,7 +322,10 @@ void advanceTime() {
 }
 
 void displayCurrentTime() {
-  lcd.clear();
+  if (player1Seconds == 59 || player2Seconds == 59)
+  {
+    lcd.clear();
+  }
   lcd.setCursor(0, 0);
   lcd.print("W:");
   lcd.setCursor(0, 1);
