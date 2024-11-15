@@ -1,9 +1,9 @@
 # Arduino Uno Chess Clock
 
-The first version of my code (code.ino) is made for a chess clock with the following design: 
+The first version (v1.0) of my code (code.ino) is made for a chess clock with the following design: 
 https://www.tinkercad.com/things/izdj3lSTSRr-my-chess-clock
 
-The second version of my code (revised_code.ino) is made for a different chess clock with the following design:
+The second version (v2.0) of my code (revised_code.ino) is made for a different chess clock with the following design:
 https://www.tinkercad.com/things/9GNWRFxF56N-my-chess-clock-v20
 
 TLDR Features: 
