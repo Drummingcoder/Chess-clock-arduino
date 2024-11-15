@@ -30,3 +30,5 @@ two additional 4-digit 7-segment displays will show the times for Player 1 and 2
 
 Limits: On v1.0, there is a limit of 999 minutes and 59 seconds, while on v2.0, there is a limit of 99 minutes and 59 seconds. The increment limit (in seconds)
 for both versions is 60 seconds.
+
+When multiple buttons are pressed, the player 1 button has first priority, then the player 2 button, then the Pause/Set button.
