@@ -376,15 +376,17 @@ void advanceTime() {
   displayCurrentTime();
 }
 
-// This function is responsible for updating the screen while the game is running
+// This function is responsible for updating the screen while the game is running, called by advanceTime()
 void displayCurrentTime() {
-  if (player1Seconds == 59 || player2Seconds == 59) {
+  if (player1Seconds == 59 || player2Seconds == 59) { // Only blink the screen once either time reaches 59 seconds (minutes don't matter)
     lcd.clear();
   }
+
+  // Player 1 (White) display
   lcd.setCursor(0, 0);
   lcd.print("W:");
   lcd.setCursor(0, 1);
-  if (player1Minutes < 10) {
+  if (player1Minutes < 10) { //Add zeros before minutes to ensure that formatting is uniform
     lcd.print("0");
   }
   lcd.print(player1Minutes);
@@ -394,6 +396,7 @@ void displayCurrentTime() {
   }
   lcd.print(player1Seconds);
 
+  // Player 2 (Black) display
   lcd.setCursor(9, 0); // Display on the right side of the same row
   lcd.print("B:");
   lcd.setCursor(9, 1);
