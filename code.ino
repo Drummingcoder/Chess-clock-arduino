@@ -1,5 +1,5 @@
-#include <EEPROM.h>
-#include <LiquidCrystal.h>
+#include <LiquidCrystal.h> //To control the LCD display
+#include <EEPROM.h> //Use the EEPROM memory to write time controls used for next time
 
 // LCD Pins, initializing screen
 const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
@@ -9,19 +9,19 @@ LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 const int buttonP3 = 8; //Pause game or move to next setting
 const int buttonP2 = 9; //Switch to player 2 or increase setting
 const int buttonP1 = 10; //Switch to player 1 or decrease setting
+
+//Buzzer pin
 const int buzzer = 7;
 
 int setupPlayer = 0;  // Controls setup stages from 0 to 2
 int setupNumber = 0;  // Controls from 0 to 1
 int currentPlayer = 0; // 0 for Player 1 (White), 1 for Player 2 (Black)
-bool gameRunning = false, gamePaused = false, whiteWon = false, blackWon = false;
-int player1Minutes = 0, player1Seconds = 0, player2Minutes = 0, player2Seconds = 0;
-int increment = 0;
-int centiCounter1 = 0, centiCounter2 = 0;
+bool gameRunning = false, gamePaused = false, whiteWon = false, blackWon = false; //Various check variables to check condition of the game
+int player1Minutes = 0, player1Seconds = 0, player2Minutes = 0, player2Seconds = 0, increment = 0; //Store the time controls
+int centiCounter1 = 0, centiCounter2 = 0; //Allows the clock to count in centiseconds for more accurate timing
 
+//Variables to check on the buttons
 bool buttonP1pressed = false, buttonP2pressed = false, buttonP3pressed = false;
-
-unsigned long lastTimeUpdate;
 
 void setup() {
   pinMode(buttonP3, INPUT);
@@ -29,7 +29,6 @@ void setup() {
   pinMode(buttonP1, INPUT);
   pinMode(buzzer, OUTPUT);
   lcd.begin(16, 2);
-  promptForSettings();
   if (EEPROM.read(0) != 255)
   {
     player1Minutes = EEPROM.read(0);
@@ -50,6 +49,7 @@ void setup() {
   {
     increment = EEPROM.read(4);
   }
+  promptForSettings();
 }
 
 void loop() {
@@ -185,6 +185,10 @@ void checkSetupButtons() {
     if (setupPlayer == 0) {
       if (setupNumber == 0) {
         player1Minutes++;
+        if (player1Minutes > 999)
+        {
+          player1Minutes = 999;
+        }
       } else if (setupNumber == 1) {
         player1Seconds++;
         if (player1Seconds >= 60)
@@ -196,6 +200,10 @@ void checkSetupButtons() {
     else if (setupPlayer == 1) {
       if (setupNumber == 0) {
         player2Minutes++;
+        if (player2Minutes > 999)
+        {
+          player2Minutes = 999;
+        }
       } else if (setupNumber == 1) {
         player2Seconds++;
         if (player2Seconds >= 60)
@@ -240,6 +248,8 @@ void checkSetupButtons() {
       increment--;
       if (increment < 0) {
         increment = 0;
+      } else if (increment > 60) {
+        increment = 60;
       }
     }
   }
