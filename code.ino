@@ -1,11 +1,17 @@
+// List of functions: 
+// setup(); and loop(); are the main functions, setup() runs once at the beginning to initialize pins, while loop() loops over and over after setup() runs
+// editTime(); works during setup, and is in charge of changing time controls or advancing settings based on button pressed
+// 
+
+
 #include <LiquidCrystal.h> // To control the LCD display
 #include <EEPROM.h> // Use the EEPROM memory to write time controls used for next time
 
-//  LCD Pins, initializing screen
+// LCD Pins, initializing screen
 const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
-//  Button Pins
+// Button Pins
 const int buttonP3 = 8; // Pause game or move to next setting
 const int buttonP2 = 9; // Switch to player 2 or increase setting
 const int buttonP1 = 10; // Switch to player 1 or decrease setting
