@@ -1,7 +1,7 @@
-#include <Wire.h>
-#include <Adafruit_LEDBackpack.h>
-#include <LiquidCrystal.h>
-#include <EEPROM.h>
+#include <Wire.h> // For communicating with the 7-segment displays
+#include <Adafruit_LEDBackpack.h> // For controlling the 4-digit 7-segment LED displays
+#include <LiquidCrystal.h> // To control the LCD display
+#include <EEPROM.h> // Use the EEPROM memory to write time controls used for next time
 
 // LCD Pins, initializing screen
 const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
@@ -21,18 +21,15 @@ const int buzzer = 7; // Buzzer pin
 int setupPlayer = 0;  // Controls setup stages from 0 to 2
 int setupNumber = 0;  // Controls from 0 to 1
 int currentPlayer = 0; // 0 for Player 1 (White), 1 for Player 2 (Black)
-bool gameRunning = false, gamePaused = false, whiteWon = false, blackWon = false;
-int player1Minutes = 0, player1Seconds = 0, player2Minutes = 0, player2Seconds = 0;
-char player1Time[5] = "0000", player2Time[5] = "0000";
-int increment = 0;
-int centiCounter1 = 0, centiCounter2 = 0;
+bool gameRunning = false, gamePaused = false, whiteWon = false, blackWon = false; // Various check variables to check condition of the game
+int player1Minutes = 0, player1Seconds = 0, player2Minutes = 0, player2Seconds = 0, increment = 0; // Store the time controls
+char player1Time[5] = "0000", player2Time[5] = "0000"; // Variables to control what is printed to the LED display
+int centiCounter1 = 0, centiCounter2 = 0; // Allows the clock to count in centiseconds for more accurate timing
 
 // Button states
 bool buttonP1pressed = false, buttonP2pressed = false, buttonP3pressed = false;
 
-// Last time update
-unsigned long lastTimeUpdate;
-
+// Runs once after the chess clock starts up, sets up variables and reads from EEPROM
 void setup() {
   // Setup pin modes
   pinMode(buttonP3, INPUT);
@@ -49,131 +46,156 @@ void setup() {
   // Initialize LCD
   lcd.begin(16, 2);
 
-  // Prompt for settings
-  promptForSettings();
-
   // Read saved settings from EEPROM
   if (EEPROM.read(0) != 255) player1Minutes = EEPROM.read(0);
   if (EEPROM.read(1) != 255) player1Seconds = EEPROM.read(1);
   if (EEPROM.read(2) != 255) player2Minutes = EEPROM.read(2);
   if (EEPROM.read(3) != 255) player2Seconds = EEPROM.read(3);
   if (EEPROM.read(4) != 255) increment = EEPROM.read(4);
+
+  // Display initial starting screen
+  updateScreen();
 }
 
 void loop() {
   if (gameRunning) {
     // Handle button presses for switching players
-    if (digitalRead(buttonP1) == HIGH && currentPlayer != 1) {
+    if (digitalRead(buttonP1) == HIGH && currentPlayer != 1) { // Player 1 button is pressed and the current player is player 1
       player1Seconds += increment;
-      while (player1Seconds >= 60) {
+      while (player1Seconds >= 60) { // In case the increment increases the # of seconds to be greater than 59
         player1Minutes++;
         player1Seconds -= 60;
       }
-      currentPlayer = 1;
-    } else if (digitalRead(buttonP2) == HIGH && currentPlayer != 0) {
+      currentPlayer = 1; // Change current player to black (player 2)
+    } else if (digitalRead(buttonP2) == HIGH && currentPlayer != 0) { // Player 2 button is pressed and the current player is player 2
       player2Seconds += increment;
       while (player2Seconds >= 60) {
         player2Minutes++;
         player2Seconds -= 60;
       }
-      currentPlayer = 0;
-    } else if (digitalRead(buttonP3) == HIGH) {
-      buttonP3pressed = true;
-    } else {
-      buttonP1pressed = buttonP2pressed = buttonP3pressed = false;
+      currentPlayer = 0; // Change current player to white (player 1)
+    } else if (digitalRead(buttonP3) == HIGH) { // Pause button is pressed
+      buttonP3pressed = true; // This variable is checked in advanceTime(); so no action is taken regarding this variable in this function
+    } else { // No buttons are pressed
+      buttonP1pressed = false; // Not used when game is running, but good to keep off in case
+      buttonP2pressed = false; // Not used when game is running, but good to keep off in case
+      buttonP3pressed = false;
     }
 
-    // Advance time and check for win conditions
+    // Call advanceTime() to advance the timer (of current player) and update the timers
     advanceTime();
-    if (whiteWon) {
+
+    // Checks if either side has won yet (the variables whiteWon and blackWon are manipulated in advanceTime())
+    // It will transition the game into a paused state, clear the screen and display timeout message
+    if (whiteWon) { // Player 2 (black) has timed out
       gamePaused = true;
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("Black timeout");
-    } else if (blackWon) {
+    } else if (blackWon) { // Player 1 (white) has timed out
       gamePaused = true;
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("White timeout");
-      whiteWon = true;
     }
 
-    delay(100); // Debounce delay
-
-    // Handle game pause
+    // Checks if the game is paused or over, and keeps execution in this loop until the Pause button is pressed again if game is paused,
+    // otherwise just pauses execution infinitely (which means that the game is over)
     while (gamePaused) {
-      if (whiteWon) {
-        while (whiteWon) {
-          noTone(buzzer);
-          delay(500);
-          tone(buzzer, 523);
-          delay(500);
-        }
+      while (whiteWon || blackWon) { // Infinitely makes the buzzer beep until chess clock is reset or turned off
+        noTone(buzzer);
+        delay(500);
+        tone(buzzer, 523);
+        delay(500);
       }
+
+      // Clear the screen and display "Game Paused" message
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("Game Paused");
-      delay(500); // Debounce delay
-      if (digitalRead(buttonP3) == HIGH && !whiteWon) {
+
+      
+      delay(200); // Debounce delay
+      if (digitalRead(buttonP3) == HIGH) { // Pause button is pressed to unpause the game
         gamePaused = false;
-        buttonP3pressed = false;
+        buttonP3pressed = false; // Ensure that the game isn't paused again in the advanceTime() function
         lcd.clear();
         delay(200); // Debounce delay
       }
     }
+    delay(100); // Debounce delay, serves dual purpose of ensuring that advanceTime() function is only run every 0.01s, allowing
+                // the centiseconds counter to only increment every centisecond and therefore count correctly
   } else {
-    // Handle button presses during setup
-    checkSetupButtons();
-    promptForSettings();
-    if (digitalRead(buttonP1) == HIGH) {
+    // If the game is not running (meaning that the time controls are being set up), execute this section of the code
+    
+    // Calls editTime() to change the values of the time control variables or advance the setting stage
+    editTime();
+
+    // Calls updateScreen() to update the screen as the time variables change
+    updateScreen();
+
+    // Checks each button to see if it's pressed, and sets the button variables to the appropriate values
+    // Also, thanks to this if-else statement, when multiple buttons are pressed, player 1 button has 1st priority, and
+    // player 2 button has 2nd priority
+    if (digitalRead(buttonP1) == HIGH) { // Decrement button is pressed
       buttonP1pressed = true;
-      buttonP2pressed = buttonP3pressed = false;
-    } else if (digitalRead(buttonP2) == HIGH) {
+      buttonP2pressed = false;
+      buttonP3pressed = false;
+    } else if (digitalRead(buttonP2) == HIGH) { // Increment button is pressed
       buttonP1pressed = false;
       buttonP2pressed = true;
       buttonP3pressed = false;
-    } else if (digitalRead(buttonP3) == HIGH) {
-      buttonP1pressed = buttonP2pressed = false;
+    } else if (digitalRead(buttonP3) == HIGH) { // SET button is pressed
+      buttonP1pressed = false;
+      buttonP2pressed = false;
       buttonP3pressed = true;
-    } else {
-      buttonP1pressed = buttonP2pressed = buttonP3pressed = false;
+    } else { // No buttons are pressed
+      buttonP1pressed = false;
+      buttonP2pressed = false;
+      buttonP3pressed = false;
     }
+    
     delay(200); // Debounce delay
   }
 }
 
-void checkSetupButtons() {
-  if (buttonP3pressed) {
-    lcd.clear();
-    if (setupNumber < 1) {
+// This function is in charge of checking the state of each button variable and changing the appropriate variable (or advancing the
+// setting stage).
+void editTime() {
+  if (buttonP3pressed) { // SET button is pressed
+    if (setupNumber < 1) { // Minutes (of either player) were being set, move on to seconds
       setupNumber++;
-    } else if (setupPlayer < 1) {
+    } else if (setupPlayer < 1) { // If execution moved here, seconds are done being set. If player 1's time was the one being set, move on to player 2.
       setupNumber = 0;
       setupPlayer++;
-    } else if (setupPlayer == 1) {
-      if (player2Minutes == 0 && player2Seconds == 0) {
+    } else if (setupPlayer == 1) { // If player 2's time is done being set, move on to the increment time control
+      if (player2Minutes == 0 && player2Seconds == 0) { // Sets player 2's time to player 1's if it's left blank
         player2Minutes = player1Minutes;
         player2Seconds = player1Seconds;
       }
       setupPlayer++;
-      setupNumber = 2;
-    } else {
+      setupNumber = 2; // To ensure that the first if block (of this if-else tree) isn't triggered and pass a check later on
+    } else { // Increment time control is done being set, start the game
       gameRunning = true;
-      // Save settings to EEPROM
+      
+      // Write variables to memory only if they have changed
       if (player1Minutes != EEPROM.read(0)) EEPROM.write(0, player1Minutes);
       if (player1Seconds != EEPROM.read(1)) EEPROM.write(1, player1Seconds);
       if (player2Minutes != EEPROM.read(2)) EEPROM.write(2, player2Minutes);
       if (player2Seconds != EEPROM.read(3)) EEPROM.write(3, player2Seconds);
       if (increment != EEPROM.read(4)) EEPROM.write(4, increment);
-      lcd.clear();
     }
-    delay(500);
+
+    delay(500); // Small delay before the game begins
   }
-  if (buttonP2pressed) {
+  if (buttonP2pressed) { // Increment button is pressed
     lcd.clear();
-    if (setupPlayer == 0) {
-      if (setupNumber == 0) {
+    if (setupPlayer == 0) { // Player 1 (white)'s time is being set
+      if (setupNumber == 0) { // Minutes are being set
         player1Minutes++;
+        if (player1Minutes > 999) { // If minutes are over 999, bring it back to 999
+          player1Minutes = 999;
+        }
       } else if (setupNumber == 1) {
         player1Seconds++;
         if (player1Seconds >= 60) player1Seconds = 59;
@@ -214,7 +236,7 @@ void checkSetupButtons() {
   }
 }
 
-void promptForSettings() {
+void updateScreen() {
   const char* labels[] = {"Minutes: ", "Seconds: ", "Increment: "};
   const char* player[] = {"Player 1: ", "Player 2: ", "Both: "};
   lcd.setCursor(0,0);
@@ -247,7 +269,6 @@ void promptForSettings() {
 }
 
 void advanceTime() {
-  unsigned long currentTime = millis();
   if (buttonP3pressed) {
     gamePaused = true;
     return;
