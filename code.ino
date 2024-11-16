@@ -42,21 +42,11 @@ void setup() {
   lcd.begin(16, 2);
 
   // Read EEPROM and initialize variables if EEPROM is not blank
-  if (EEPROM.read(0) != 255) {
-    player1Minutes = EEPROM.read(0);
-  }
-  if (EEPROM.read(1) != 255) {
-    player1Seconds = EEPROM.read(1);
-  }
-  if (EEPROM.read(2) != 255) {
-    player2Minutes = EEPROM.read(2);
-  }
-  if (EEPROM.read(3) != 255) {
-    player2Seconds = EEPROM.read(3);
-  }
-  if (EEPROM.read(4) != 255) {
-    increment = EEPROM.read(4);
-  }
+  if (EEPROM.read(0) != 255) player1Minutes = EEPROM.read(0);
+  if (EEPROM.read(1) != 255) player1Seconds = EEPROM.read(1);
+  if (EEPROM.read(2) != 255) player2Minutes = EEPROM.read(2);
+  if (EEPROM.read(3) != 255) player2Seconds = EEPROM.read(3);
+  if (EEPROM.read(4) != 255) increment = EEPROM.read(4);
 
   // Display initial starting screen
   updateScreen();
@@ -71,31 +61,23 @@ void loop() {
     // Checks the states of the buttons, and executes the corresponding code to switch current player, or pause the game
     // Also, thanks to this if-else statement, when multiple buttons are pressed, player 1 button has 1st priority, and
     // player 2 button has 2nd priority
-    if (digitalRead(buttonP1) == HIGH) { // Player 1 button is pressed
-      if (currentPlayer != 1) { // If the current player is player 1, then run this code
-      	player1Seconds += increment;
-      	while (player1Seconds >= 60) { // In case the increment increases the # of seconds to be greater than 59
-        	player1Minutes++;
-        	player1Seconds -= 60;
-      	}
+    if (digitalRead(buttonP1) == HIGH && currentPlayer != 1) { // Player 1 button is pressed and the current player is player 1
+      player1Seconds += increment;
+      while (player1Seconds >= 60) { // In case the increment increases the # of seconds to be greater than 59
+        player1Minutes++;
+        player1Seconds -= 60;
       }
       currentPlayer = 1; // Change current player to black (player 2)
-    }
-    else if (digitalRead(buttonP2) == HIGH) { // Player 2 button is pressed
-      if (currentPlayer != 0) { // If the current player is player 2, then run this code
-      	player2Seconds += increment;
-      	while (player2Seconds >= 60)
-      	{
-        	player2Minutes++;
-        	player2Seconds -= 60;
-      	}
+    } else if (digitalRead(buttonP2) == HIGH && currentPlayer != 0) { // Player 2 button is pressed and the current player is player 2
+      player2Seconds += increment;
+      while (player2Seconds >= 60) {
+        player2Minutes++;
+        player2Seconds -= 60;
       }
       currentPlayer = 0; // Change current player to white (player 1)
-    }
-    else if (digitalRead(buttonP3) == HIGH) { // Pause button is pressed
+    } else if (digitalRead(buttonP3) == HIGH) { // Pause button is pressed
       buttonP3pressed = true; // This variable is checked in advanceTime(); so no action is taken regarding this variable in this function
-    }
-    else { // No buttons are pressed
+    } else { // No buttons are pressed
       buttonP1pressed = false; // Not used when game is running, but good to keep off in case
       buttonP2pressed = false; // Not used when game is running, but good to keep off in case
       buttonP3pressed = false;
@@ -106,13 +88,12 @@ void loop() {
 
     // Checks if either side has won yet (the variables whiteWon and blackWon are manipulated in advanceTime())
     // It will transition the game into a paused state, clear the screen and display timeout message
-    if (whiteWon == true) { // Player 2 (black) has timed out
+    if (whiteWon) { // Player 2 (black) has timed out
       gamePaused = true;
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("Black timeout");
-    }
-    else if (blackWon == true) { // Player 1 (white) has timed out
+    } else if (blackWon) { // Player 1 (white) has timed out
       gamePaused = true;
       lcd.clear();
       lcd.setCursor(0, 0);
@@ -161,18 +142,15 @@ void loop() {
       buttonP1pressed = true;
       buttonP2pressed = false;
       buttonP3pressed = false;
-    }
-    else if (digitalRead(buttonP2) == HIGH) { // Increment button is pressed
+    } else if (digitalRead(buttonP2) == HIGH) { // Increment button is pressed
       buttonP1pressed = false;
       buttonP2pressed = true;
       buttonP3pressed = false;
-    }
-    else if (digitalRead(buttonP3) == HIGH) { // SET button is pressed
+    } else if (digitalRead(buttonP3) == HIGH) { // SET button is pressed
       buttonP1pressed = false;
       buttonP2pressed = false;
       buttonP3pressed = true;
-    }
-    else { // No buttons are pressed
+    } else { // No buttons are pressed
       buttonP1pressed = false;
       buttonP2pressed = false;
       buttonP3pressed = false;
@@ -189,38 +167,25 @@ void editTime() {
     lcd.clear();
     if (setupNumber < 1) { // Minutes (of either player) were being set, move on to seconds
       setupNumber++;
-    }
-    else if (setupPlayer < 1) { // If execution moved here, seconds are done being set. If player 1's time was the one being set, move on to player 2.
+    } else if (setupPlayer < 1) { // If execution moved here, seconds are done being set. If player 1's time was the one being set, move on to player 2.
       setupNumber = 0;
       setupPlayer++;
-    }
-    else if (setupPlayer == 1) { // If player 2's time is done being set, move on to the increment time control
+    } else if (setupPlayer == 1) { // If player 2's time is done being set, move on to the increment time control
       if (player2Minutes == 0 && player2Seconds == 0) { // Sets player 2's time to player 1's if it's left blank
         player2Minutes = player1Minutes;
         player2Seconds = player1Seconds;
       }
       setupPlayer++;
       setupNumber = 2; // To ensure that the first if block (of this if-else tree) isn't triggered and pass a check later on
-    }
-    else { // Increment time control is done being set, start the game
+    } else { // Increment time control is done being set, start the game
       gameRunning = true;
       
       // Write variables to memory only if they have changed
-      if (player1Minutes != EEPROM.read(0)) {
-        EEPROM.write(0, player1Minutes);
-      }
-      if (player1Seconds != EEPROM.read(1)) {
-        EEPROM.write(1, player1Seconds);
-      }
-      if (player2Minutes != EEPROM.read(2)) {
-        EEPROM.write(2, player2Minutes);
-      }
-      if (player2Seconds != EEPROM.read(3)) {
-        EEPROM.write(3, player2Seconds);
-      }
-      if (increment != EEPROM.read(4)) {
-        EEPROM.write(4, increment);
-      }
+      if (player1Minutes != EEPROM.read(0)) EEPROM.write(0, player1Minutes);
+      if (player1Seconds != EEPROM.read(1)) EEPROM.write(1, player1Seconds);
+      if (player2Minutes != EEPROM.read(2)) EEPROM.write(2, player2Minutes);
+      if (player2Seconds != EEPROM.read(3)) EEPROM.write(3, player2Seconds);
+      if (increment != EEPROM.read(4)) EEPROM.write(4, increment);
     }
     
     delay(500); // Small delay before the game begins
@@ -230,19 +195,16 @@ void editTime() {
     if (setupPlayer == 0) { // Player 1 (white)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
         player1Minutes++;
-        if (player1Minutes > 999) // If minutes are over 999, bring it back to 999
-        {
+        if (player1Minutes > 999) { // If minutes are over 999, bring it back to 999
           player1Minutes = 999;
         }
       } else if (setupNumber == 1) { // Seconds are being set
         player1Seconds++;
-        if (player1Seconds >= 60) // If seconds are over 59, bring it back to 59
-        {
+        if (player1Seconds >= 60) { // If seconds are over 59, bring it back to 59
           player1Seconds = 59;
         }
       }
-    }
-    else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
+    } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
         player2Minutes++;
         if (player2Minutes > 999) // If minutes are over 999, bring it back to 999
