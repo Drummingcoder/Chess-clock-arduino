@@ -1,3 +1,11 @@
+// List of functions: 
+// setup(); and loop(); are the main functions, setup() runs once at the beginning to initialize pins, while loop() loops over and over after setup() runs
+// editTime(); works during setup, and is in charge of changing time controls or advancing settings based on button pressed
+// updateScreen(); works during setup, in charge of updating the screen as the time controls are set
+// advanceTime(); works while the game is running, and is in charge of managing the timers and checking for timeout
+// displayCurrentTime(); works while the game is running, and is in charge of updating the screen as the timers count down
+// setTime(); works during both stages, and is in charge of changing the arrays to fit the variables
+
 #include <Wire.h> // For communicating with the 7-segment displays
 #include <Adafruit_LEDBackpack.h> // For controlling the 4-digit 7-segment LED displays
 #include <LiquidCrystal.h> // To control the LCD display
@@ -193,71 +201,80 @@ void editTime() {
     if (setupPlayer == 0) { // Player 1 (white)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
         player1Minutes++;
-        if (player1Minutes > 999) { // If minutes are over 999, bring it back to 999
-          player1Minutes = 999;
-        }
-      } else if (setupNumber == 1) {
+        if (player1Minutes > 999) player1Minutes = 999; // If minutes are over 999, bring it back to 999
+      } else if (setupNumber == 1) { // Seconds are being set
         player1Seconds++;
-        if (player1Seconds >= 60) player1Seconds = 59;
+        if (player1Seconds >= 60) player1Seconds = 59; // If seconds are over 59, bring it back to 59
       }
-    } else if (setupPlayer == 1) {
-      if (setupNumber == 0) {
+    } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
+      if (setupNumber == 0) { // Minutes are being set
         player2Minutes++;
-      } else if (setupNumber == 1) {
+        if (player2Minutes > 999) player2Minutes = 999; // If minutes are over 999, bring it back to 999
+      } else if (setupNumber == 1) { // Seconds are being set
         player2Seconds++;
-        if (player2Seconds >= 60) player2Seconds = 59;
+        if (player2Seconds >= 60) player2Seconds = 59; // If seconds are over 59, bring it back to 59
       }
-    } else if (setupNumber == 2) {
+    } else if (setupNumber == 2) { // Increment time control is being set
       increment++;
+      if (increment > 60) increment = 60; // If increment is over 60, bring it back to 60
     }
   }
-  if (buttonP1pressed) {
+  if (buttonP1pressed) { // Decrement button was pressed
     lcd.clear();
-    if (setupPlayer == 0) {
-      if (setupNumber == 0) {
+    if (setupPlayer == 0) { // Player 1 (white)'s time is being set
+      if (setupNumber == 0) { // Minutes are being set
         player1Minutes--;
-        if (player1Minutes < 0) player1Minutes = 0;
-      } else if (setupNumber == 1) {
+        if (player1Minutes < 0) player1Minutes = 0; // If minutes are negative, bring it back to 0
+      } else if (setupNumber == 1) { // Seconds are being set
         player1Seconds--;
-        if (player1Seconds < 0) player1Seconds = 0;
+        if (player1Seconds < 0) player1Seconds = 0; // If seconds are negative, bring it back to 0
       }
-    } else if (setupPlayer == 1) {
-      if (setupNumber == 0) {
+    } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
+      if (setupNumber == 0) { // Minutes are being set
         player2Minutes--;
-        if (player2Minutes < 0) player2Minutes = 0;
-      } else if (setupNumber == 1) {
+        if (player2Minutes < 0) player2Minutes = 0; // If minutes are negative, bring it back to 0
+      } else if (setupNumber == 1) { // Seconds are being set
         player2Seconds--;
-        if (player2Seconds < 0) player2Seconds = 0;
+        if (player2Seconds < 0) player2Seconds = 0; // If seconds are negative, bring it back to 0
       }
     } else if (setupNumber == 2) {
       increment--;
-      if (increment < 0) increment = 0;
+      if (increment < 0) increment = 0; // If increment is negative, bring it back to 0
     }
   }
 }
 
+// During the setup process, display the labels accordingly to the stage of setup it's in
 void updateScreen() {
+  // Initialize arrays of labels
   const char* labels[] = {"Minutes: ", "Seconds: ", "Increment: "};
   const char* player[] = {"Player 1: ", "Player 2: ", "Both: "};
+
+  // Display appropriate labels
   lcd.setCursor(0,0);
   lcd.print(player[setupPlayer]);
   lcd.setCursor(0,1);
   lcd.print(labels[setupNumber]);
-  if (setupPlayer == 0) {
+
+  // Displays appropriate label based on setting stage
+  if (setupPlayer == 0) { // Player 1's time is being set
+    // Print White's time on display 1
     led_display1.clear();
     setTime(player1Minutes, true, true);
     setTime(player1Seconds, true, false);
     led_display1.println(player1Time);
     led_display1.drawColon(true);
     led_display1.writeDisplay();
-  } else if (setupPlayer == 1) {
+  } else if (setupPlayer == 1) { // Player 2's time is being set
+    // Print Black's time on display 2
     led_display2.clear();
     setTime(player2Minutes, false, true);
     setTime(player2Seconds, false, false);
     led_display2.println(player2Time);
     led_display2.drawColon(true);
     led_display2.writeDisplay();
-  } else {
+  } else { // Increment time control is being set
+    //Clear both screens, print increment on display 1
     led_display1.clear();
     led_display2.clear();
     led_display1.println(increment);
@@ -268,56 +285,66 @@ void updateScreen() {
   }
 }
 
+// While the game is running, based on whose turn it is, this function will update the corresponding timer and call
+// displayCurrentTime() to update the screen
 void advanceTime() {
-  if (buttonP3pressed) {
+  if (buttonP3pressed) { // Pause button is pressed
     gamePaused = true;
-    return;
+    return; // Return execution to loop()
   }
-  if (currentPlayer == 0) {
-    if (centiCounter1 < 10) {
+
+  // Update timer based on whose turn it is
+  if (currentPlayer == 0) { // White's turn
+    if (centiCounter1 < 10) { // As this function only runs every 0.01s, this centisecond counter will increment at the correct time
       centiCounter1++;
-      return;
-    } else if (player1Seconds > 0) {
+    } else if (player1Seconds > 0) { // If there are seconds left to reduce
       centiCounter1 = 0;
       player1Seconds--;
-    } else if (player1Minutes > 0) {
+    } else if (player1Minutes > 0) { // If there are minutes left to reduce
       centiCounter1 = 0;
       player1Minutes--;
       player1Seconds = 59;
-    } else {
+    } else { // White's time has run out, so Black wins
       blackWon = true;
     }
-  } else if (currentPlayer == 1) {
+  } else if (currentPlayer == 1) { // Black's turn
     if (centiCounter2 < 10) {
       centiCounter2++;
-      return;
-    } else if (player2Seconds > 0) {
+    } else if (player2Seconds > 0) { // If there are seconds left to reduce
       centiCounter2 = 0;
       player2Seconds--;
-    } else if (player2Minutes > 0) {
+    } else if (player2Minutes > 0) { // If there are minutes left to reduce
       centiCounter2 = 0;
       player2Minutes--;
       player2Seconds = 59;
-    } else {
+    } else { // Black's time has run out, so White wins
       whiteWon = true;
     }
   }
+
+  // Call displayCurrentTime() to update the screen
   displayCurrentTime();
 }
 
+// This function is responsible for updating the screen while the game is running, called by advanceTime()
 void displayCurrentTime() {
-  if (player1Seconds == 59 || player2Seconds == 59) lcd.clear();
+  if (player1Seconds == 59 || player2Seconds == 59) lcd.clear(); // Only blink the screen once either time reaches 59 seconds (minutes don't matter)
+
+  //LCD display
   lcd.setCursor(0, 0);
   lcd.print("<- W");
+  lcd.setCursor(12, 0); // Display on the right side of the same row
+  lcd.print("B ->");
+
+  // Player 1 (White) time display
   led_display1.clear();
   setTime(player1Minutes, true, true);
   setTime(player1Seconds, true, false);
   led_display1.println(player1Time);
   led_display1.drawColon(true);
   led_display1.writeDisplay();
-
-  lcd.setCursor(12, 0); // Display on the right side of the same row
-  lcd.print("B ->");
+  
+  // Player 2 (Black) time display
   led_display2.clear();
   setTime(player2Minutes, false, true);
   setTime(player2Seconds, false, false);
@@ -326,8 +353,12 @@ void displayCurrentTime() {
   led_display2.writeDisplay();
 }
 
+// Sets the arrays player1Time and player2Time to the appropriate numbers
 void setTime(int timeSetting, bool player1, bool minutes) {
+  // Initialize variables
   int firstVar, secondVar;
+
+  // Checking to set minutes or seconds
   if (minutes) {
     firstVar = 0;
     secondVar = 1;
@@ -335,6 +366,8 @@ void setTime(int timeSetting, bool player1, bool minutes) {
     firstVar = 2;
     secondVar = 3;
   }
+
+  // Adjust the arrays based on timeSetting
   if (player1) {
     if (timeSetting < 10) {
       player1Time[firstVar] = '0';
