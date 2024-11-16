@@ -195,35 +195,23 @@ void editTime() {
     if (setupPlayer == 0) { // Player 1 (white)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
         player1Minutes++;
-        if (player1Minutes > 999) { // If minutes are over 999, bring it back to 999
-          player1Minutes = 999;
-        }
+        if (player1Minutes > 999) player1Minutes = 999; // If minutes are over 999, bring it back to 999
       } else if (setupNumber == 1) { // Seconds are being set
         player1Seconds++;
-        if (player1Seconds >= 60) { // If seconds are over 59, bring it back to 59
-          player1Seconds = 59;
-        }
+        if (player1Seconds >= 60) player1Seconds = 59; // If seconds are over 59, bring it back to 59
       }
     } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
         player2Minutes++;
-        if (player2Minutes > 999) // If minutes are over 999, bring it back to 999
-        {
-          player2Minutes = 999;
-        }
+        if (player2Minutes > 999) player2Minutes = 999; // If minutes are over 999, bring it back to 999
       } else if (setupNumber == 1) { // Seconds are being set
         player2Seconds++;
-        if (player2Seconds >= 60) // If seconds are over 59, bring it back to 59
-        {
-          player2Seconds = 59;
-        }
+        if (player2Seconds >= 60) player2Seconds = 59; // If seconds are over 59, bring it back to 59
       }
     }
     else if (setupNumber == 2) { // Increment time control is being set
       increment++;
-      if (increment > 60) { // If increment is over 60, bring it back to 60
-        increment = 60;
-      }
+      if (increment > 60) increment = 60; // If increment is over 60, bring it back to 60
     }
   }
   if (buttonP1pressed) { // Decrement button was pressed
@@ -231,34 +219,22 @@ void editTime() {
     if (setupPlayer == 0) { // Player 1 (white)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
         player1Minutes--;
-        if (player1Minutes < 0) { // If minutes are negative, bring it back to 0
-          player1Minutes = 0;
-        }
+        if (player1Minutes < 0) player1Minutes = 0; // If minutes are negative, bring it back to 0
       } else if (setupNumber == 1) { // Seconds are being set
         player1Seconds--;
-        if (player1Seconds < 0) { // If seconds are negative, bring it back to 0
-          player1Seconds = 0;
-        }
+        if (player1Seconds < 0) player1Seconds = 0; // If seconds are negative, bring it back to 0
       }
-    }
-    else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
+    } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
         player2Minutes--;
-        if (player2Minutes < 0) { // If minutes are negative, bring it back to 0
-          player2Minutes = 0;
-        }
-      } else if (setupNumber == 1) { // Minutes are being set
+        if (player2Minutes < 0) player2Minutes = 0; // If minutes are negative, bring it back to 0
+      } else if (setupNumber == 1) { // Seconds are being set
         player2Seconds--;
-        if (player2Seconds < 0) { // If seconds are negative, bring it back to 0
-          player2Seconds = 0;
-        }
+        if (player2Seconds < 0) player2Seconds = 0; // If seconds are negative, bring it back to 0
       }
-    }
-    else if (setupNumber == 2) { // Increment time control is being set
+    } else if (setupNumber == 2) { // Increment time control is being set
       increment--;
-      if (increment < 0) { // If increment is negative, bring it back to 0
-        increment = 0;
-      }
+      if (increment < 0) increment = 0; // If increment is negative, bring it back to 0
     }
   }
 }
@@ -279,20 +255,16 @@ void updateScreen() {
   if (setupPlayer == 0) { // Player 1's time is being set
     if (setupNumber == 0) { // Minutes is being set
       lcd.print(player1Minutes);
-    }
-    else { // Seconds is being set
+    } else { // Seconds is being set
       lcd.print(player1Seconds);
     }
-  }
-  else if (setupPlayer == 1) { // Player 2's time is being set
+  } else if (setupPlayer == 1) { // Player 2's time is being set
     if (setupNumber == 0) { // Minutes is being set
       lcd.print(player2Minutes);
-    }
-    else { // Seconds is being set
+    } else { // Seconds is being set
       lcd.print(player2Seconds);
     }
-  }
-  else { // Increment time control is being set
+  } else { // Increment time control is being set
     lcd.print(increment);
   }
 }
@@ -309,34 +281,27 @@ void advanceTime() {
   if (currentPlayer == 0) { // White's turn
     if (centiCounter1 < 10) { // As this function only runs every 0.01s, this centisecond counter will increment at the correct time
       centiCounter1++;
-    }
-    else if (player1Seconds > 0) { // If there are seconds left to reduce
+    } else if (player1Seconds > 0) { // If there are seconds left to reduce
       centiCounter1 = 0;
       player1Seconds--;
-    }
-    else if (player1Minutes > 0) { // If there are minutes left to reduce
+    } else if (player1Minutes > 0) { // If there are minutes left to reduce
       centiCounter1 = 0;
       player1Minutes--;
       player1Seconds = 59;
-    }
-    else { // White's time has run out, so Black wins
+    } else { // White's time has run out, so Black wins
       blackWon = true;
     }
-  }
-  else if (currentPlayer == 1) { // Black's turn
+  } else if (currentPlayer == 1) { // Black's turn
     if (centiCounter2 < 10) {
       centiCounter2++;
-    }
-    else if (player2Seconds > 0) { // If there are seconds left to reduce
+    } else if (player2Seconds > 0) { // If there are seconds left to reduce
       centiCounter2 = 0;
       player2Seconds--;
-    }
-    else if (player2Minutes > 0) { // If there are minutes left to reduce
+    } else if (player2Minutes > 0) { // If there are minutes left to reduce
       centiCounter2 = 0;
       player2Minutes--;
       player2Seconds = 59;
-    }
-    else { // Black's time has run out, so White wins
+    } else { // Black's time has run out, so White wins
       whiteWon = true;
     }
   }
@@ -347,35 +312,25 @@ void advanceTime() {
 
 // This function is responsible for updating the screen while the game is running, called by advanceTime()
 void displayCurrentTime() {
-  if (player1Seconds == 59 || player2Seconds == 59) { // Only blink the screen once either time reaches 59 seconds (minutes don't matter)
-    lcd.clear();
-  }
+  if (player1Seconds == 59 || player2Seconds == 59) lcd.clear(); // Only blink the screen once either time reaches 59 seconds (minutes don't matter)
 
   // Player 1 (White) display
   lcd.setCursor(0, 0);
   lcd.print("W:");
   lcd.setCursor(0, 1);
-  if (player1Minutes < 10) { //Add zeros before minutes to ensure that formatting is uniform
-    lcd.print("0");
-  }
+  if (player1Minutes < 10) lcd.print("0"); //Add zeros before minutes to ensure that formatting is uniform
   lcd.print(player1Minutes);
   lcd.print(":");
-  if (player1Seconds < 10) {
-    lcd.print("0");
-  }
+  if (player1Seconds < 10) lcd.print("0");
   lcd.print(player1Seconds);
 
   // Player 2 (Black) display
   lcd.setCursor(9, 0); // Display on the right side of the same row
   lcd.print("B:");
   lcd.setCursor(9, 1);
-  if (player2Minutes < 10) {
-    lcd.print("0");
-  }
+  if (player2Minutes < 10) lcd.print("0");
   lcd.print(player2Minutes);
   lcd.print(":");
-  if (player2Seconds < 10) {
-    lcd.print("0");
-  }
+  if (player2Seconds < 10) lcd.print("0");
   lcd.print(player2Seconds);
 }
