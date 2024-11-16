@@ -53,13 +53,28 @@ void setup() {
 
   // Initialize LCD
   lcd.begin(16, 2);
+  lcd.setCursor(0, 0);
+  lcd.print("Use previous?");
 
-  // Read saved settings from EEPROM
-  if (EEPROM.read(0) != 255) player1Minutes = EEPROM.read(0);
-  if (EEPROM.read(1) != 255) player1Seconds = EEPROM.read(1);
-  if (EEPROM.read(2) != 255) player2Minutes = EEPROM.read(2);
-  if (EEPROM.read(3) != 255) player2Seconds = EEPROM.read(3);
-  if (EEPROM.read(4) != 255) increment = EEPROM.read(4);
+  // Check to use previous settings or not
+  bool checker1 = true, checker2 = false;
+  while (checker1) {
+    if (digitalRead(buttonP1) == HIGH) {
+      checker1 = false;
+      checker2 = true;
+    } else if (digitalRead(buttonP2) == HIGH) {
+      checker1 = false;
+    }
+  }
+
+  if (checker2) {
+    // Read saved settings from EEPROM
+    if (EEPROM.read(0) != 255) player1Minutes = EEPROM.read(0);
+    if (EEPROM.read(1) != 255) player1Seconds = EEPROM.read(1);
+    if (EEPROM.read(2) != 255) player2Minutes = EEPROM.read(2);
+    if (EEPROM.read(3) != 255) player2Seconds = EEPROM.read(3);
+    if (EEPROM.read(4) != 255) increment = EEPROM.read(4);
+  }
 
   // Display initial starting screen
   updateScreen();
@@ -67,6 +82,15 @@ void setup() {
 
 void loop() {
   if (gameRunning) {
+    //Start the game only when player 1 presses the button
+    bool gameStarted = true;
+    while (gameStarted) {
+      if (digitalRead(buttonP1 == HIGH) {
+        gameStarted = false;
+        currentPlayer = 1;
+      }
+    }
+
     // Handle button presses for switching players
     if (digitalRead(buttonP1) == HIGH && currentPlayer != 1) { // Player 1 button is pressed and the current player is player 1
       player1Seconds += increment;
