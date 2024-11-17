@@ -400,6 +400,7 @@ void setTime(int timeSetting, bool player1, bool minutes) {
       player1Time[firstVar] = timeSetting / 10 + '0';
       player1Time[secondVar] = timeSetting % 10 + '0';
     } else {
+      // Hexadecimal Display
       int temp = timeSetting / 10;
       if (temp == 10) {
         player1Time[firstVar] = 'A';
@@ -418,6 +419,7 @@ void setTime(int timeSetting, bool player1, bool minutes) {
       player2Time[firstVar] = timeSetting / 10 + '0';
       player2Time[secondVar] = timeSetting % 10 + '0';
     } else {
+      // Hexadecimal Display
       int temp = timeSetting / 10 + '0';
       if (temp == 10) {
         player2Time[firstVar] = 'A';
