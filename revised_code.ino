@@ -145,7 +145,6 @@ void loop() {
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("Game Paused");
-
       
       delay(200); // Debounce delay
       if (digitalRead(buttonP3) == HIGH) { // Pause button is pressed to unpause the game
@@ -225,7 +224,7 @@ void editTime() {
     if (setupPlayer == 0) { // Player 1 (white)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
         player1Minutes++;
-        if (player1Minutes > 999) player1Minutes = 999; // If minutes are over 999, bring it back to 999
+        if (player1Minutes > 120) player1Minutes = 120; // If minutes are over 120, bring it back to 120
       } else if (setupNumber == 1) { // Seconds are being set
         player1Seconds++;
         if (player1Seconds >= 60) player1Seconds = 59; // If seconds are over 59, bring it back to 59
@@ -233,7 +232,7 @@ void editTime() {
     } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
         player2Minutes++;
-        if (player2Minutes > 999) player2Minutes = 999; // If minutes are over 999, bring it back to 999
+        if (player2Minutes > 120) player2Minutes = 120; // If minutes are over 120, bring it back to 120
       } else if (setupNumber == 1) { // Seconds are being set
         player2Seconds++;
         if (player2Seconds >= 60) player2Seconds = 59; // If seconds are over 59, bring it back to 59
@@ -396,16 +395,36 @@ void setTime(int timeSetting, bool player1, bool minutes) {
     if (timeSetting < 10) {
       player1Time[firstVar] = '0';
       player1Time[secondVar] = timeSetting + '0';
-    } else {
+    } else if (timeSetting < 100) {
       player1Time[firstVar] = timeSetting / 10 + '0';
+      player1Time[secondVar] = timeSetting % 10 + '0';
+    } else {
+      int temp = timeSetting / 10 + '0';
+      if (temp == 10) {
+        player1Time[firstVar] = 'A';
+      } else if (temp == 11) {
+        player1Time[firstVar] = 'B';
+      } else if (temp == 12) {
+        player1Time[firstVar] = 'C';
+      }
       player1Time[secondVar] = timeSetting % 10 + '0';
     }
   } else {
     if (timeSetting < 10) {
       player2Time[firstVar] = '0';
       player2Time[secondVar] = timeSetting + '0';
-    } else {
+    } else if (timeSetting < 100) {
       player2Time[firstVar] = timeSetting / 10 + '0';
+      player2Time[secondVar] = timeSetting % 10 + '0';
+    } else {
+      int temp = timeSetting / 10 + '0';
+      if (temp == 10) {
+        player2Time[firstVar] = 'A';
+      } else if (temp == 11) {
+        player2Time[firstVar] = 'B';
+      } else if (temp == 12) {
+        player2Time[firstVar] = 'C';
+      }
       player2Time[secondVar] = timeSetting % 10 + '0';
     }
   }
