@@ -31,7 +31,7 @@ int setupNumber = 0;  // Controls from 0 to 1
 int currentPlayer = 0; // 0 for Player 1 (White), 1 for Player 2 (Black)
 bool gameRunning = false, gamePaused = false, whiteWon = false, blackWon = false; // Various check variables to check condition of the game
 int player1Minutes = 0, player1Seconds = 0, player2Minutes = 0, player2Seconds = 0, increment = 0; // Store the time controls
-char player1Time[5] = "0000", player2Time[5] = "0000"; // Variables to control what is printed to the LED display
+char player1Time[4] = "0000", player2Time[4] = "0000"; // Variables to control what is printed to the LED display
 int centiCounter1 = 0, centiCounter2 = 0; // Allows the clock to count in centiseconds for more accurate timing
 
 // Button states
@@ -85,7 +85,7 @@ void loop() {
     //Start the game only when player 1 presses the button
     bool gameStarted = true;
     while (gameStarted) {
-      if (digitalRead(buttonP1 == HIGH) {
+      if (digitalRead(buttonP1) == HIGH) {
         gameStarted = false;
         currentPlayer = 1;
       }
@@ -215,6 +215,7 @@ void editTime() {
       if (player2Minutes != EEPROM.read(2)) EEPROM.write(2, player2Minutes);
       if (player2Seconds != EEPROM.read(3)) EEPROM.write(3, player2Seconds);
       if (increment != EEPROM.read(4)) EEPROM.write(4, increment);
+      EEPROM.commit();
     }
 
     delay(500); // Small delay before the game begins
@@ -399,7 +400,7 @@ void setTime(int timeSetting, bool player1, bool minutes) {
       player1Time[firstVar] = timeSetting / 10 + '0';
       player1Time[secondVar] = timeSetting % 10 + '0';
     } else {
-      int temp = timeSetting / 10 + '0';
+      int temp = timeSetting / 10;
       if (temp == 10) {
         player1Time[firstVar] = 'A';
       } else if (temp == 11) {
