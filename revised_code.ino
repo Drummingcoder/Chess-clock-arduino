@@ -215,7 +215,8 @@ void editTime() {
       if (player2Minutes != EEPROM.read(2)) EEPROM.write(2, player2Minutes);
       if (player2Seconds != EEPROM.read(3)) EEPROM.write(3, player2Seconds);
       if (increment != EEPROM.read(4)) EEPROM.write(4, increment);
-      EEPROM.commit();
+      // EEPROM.commit();
+      // Might need above line on specific UNO versions
     }
 
     delay(500); // Small delay before the game begins
