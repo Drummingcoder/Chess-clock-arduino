@@ -21,6 +21,7 @@ Things to add:
 - Better colon blinking during game
 - Time difference on LED display (v2.0 only)
 - Games counter (EEPROM storage or not?)
+- End game early using Pause menu and increment game counter accordingly
 - 1 minute warning?
 - Increment minutes by 5 after 15, and by 10 after 30 or preset
 - Increment seconds by 5 after 20, but before 45 or preset
