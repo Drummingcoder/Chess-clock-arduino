@@ -18,6 +18,13 @@ Things to add:
 - Add a centisecond display (v1.0 only)
 - Blinking minutes or seconds when setting up
 - Better time handling using millis(), using delay() for now
+- Better colon blinking during game
+- Time difference on LED display (v2.0 only)
+- Games counter (EEPROM storage or not?)
+- 1 minute warning?
+- Increment minutes by 5 after 15, and by 10 after 30 or preset
+- Increment seconds by 5 after 20, but before 45 or preset
+- Ending buzzer melody?
 
 Added: 
 - Option to use previous time settings or not when setting up
@@ -33,7 +40,7 @@ After a player times out, the display will change to show who has timed out and 
 This chess clock also can store the previous game setting and will restore those settings the next time you play (the first time you use it, though, will simply show zeros for all settings). The difference between v1.0 and v2.0 is that on v2.0,
 two additional 4-digit 7-segment displays will show the times for Player 1 and 2 separately, while this information is put onto one 16 X 2 LCD on v1.0.
 
-Limits: On v1.0, there is a limit of 999 minutes and 59 seconds, while on v2.0, there is a limit of 99 minutes and 59 seconds. The increment limit (in seconds)
+Limits: On v1.0, there is a limit of 999 minutes and 59 seconds, while on v2.0, there is a limit of 120 minutes and 59 seconds. The increment limit (in seconds)
 for both versions is 60 seconds.
 
 When multiple buttons are pressed, the player 1 button has first priority, then the player 2 button, then the Pause/Set button.
