@@ -99,6 +99,9 @@ void loop() {
         player1Seconds -= 60;
       }
       currentPlayer = 1; // Change current player to black (player 2)
+      tone(buzzer, 523);
+      delay(10);
+      noTone(buzzer);
     } else if (digitalRead(buttonP2) == HIGH && currentPlayer != 0) { // Player 2 button is pressed and the current player is player 2
       player2Seconds += increment;
       while (player2Seconds >= 60) {
@@ -106,6 +109,9 @@ void loop() {
         player2Seconds -= 60;
       }
       currentPlayer = 0; // Change current player to white (player 1)
+      tone(buzzer, 523);
+      delay(10);
+      noTone(buzzer);
     } else if (digitalRead(buttonP3) == HIGH) { // Pause button is pressed
       buttonP3pressed = true; // This variable is checked in advanceTime(); so no action is taken regarding this variable in this function
     } else { // No buttons are pressed
