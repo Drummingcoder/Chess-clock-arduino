@@ -26,6 +26,7 @@ Things to add:
 - Increment minutes by 5 after 15, and by 10 after 30 or preset
 - Increment seconds by 5 after 20, but before 45 or preset
 - Ending buzzer melody?
+- Some way to display PST time???
 
 Added: 
 - Option to use previous time settings or not when setting up
