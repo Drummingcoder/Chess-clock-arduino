@@ -34,6 +34,7 @@ int player1Minutes = 0, player1Seconds = 0, player2Minutes = 0, player2Seconds =
 char player1Time[4] = "0000", player2Time[4] = "0000"; // Variables to control what is printed to the LED display
 int centiCounter1 = 0, centiCounter2 = 0; // Allows the clock to count in centiseconds for more accurate timing
 int whiteGames = 0, blackGames = 0;
+bool gameStarted = true;
 
 // Button states
 bool buttonP1pressed = false, buttonP2pressed = false, buttonP3pressed = false;
@@ -86,11 +87,11 @@ void setup() {
 void loop() {
   if (gameRunning) {
     //Start the game only when player 1 presses the button
-    bool gameStarted = true;
     while (gameStarted) {
       if (digitalRead(buttonP1) == HIGH) {
         gameStarted = false;
         currentPlayer = 1;
+        lcd.clear();
       }
     }
 
@@ -391,8 +392,10 @@ void displayCurrentTime() {
   lcd.print("<- W");
   lcd.setCursor(12, 0); // Display on the right side of the same row
   lcd.print("B ->");
-  lcd.setCursor(6, 1);
-  lcd.print(whiteGames + "-" + blackGames);
+  lcd.setCursor(7, 1);
+  lcd.print(whiteGames);
+  lcd.print("- ");
+  lcd.print(blackGames);
 
   // Player 1 (White) time display
   led_display1.clear();
@@ -406,7 +409,6 @@ void displayCurrentTime() {
   setTime(player2Minutes, false, true);
   setTime(player2Seconds, false, false);
   led_display2.println(player2Time);
-  led_display2.drawColon(true);
   led_display2.writeDisplay();
 }
 
