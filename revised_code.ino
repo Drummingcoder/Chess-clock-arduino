@@ -57,7 +57,8 @@ void setup() {
   lcd.begin(16, 2);
   lcd.setCursor(0, 0);
   lcd.print("Use previous?");
-
+  lcd.print("time?");
+  
   // Check to use previous settings or not
   bool checker1 = true, checker2 = false;
   while (checker1) {
@@ -76,10 +77,31 @@ void setup() {
     if (EEPROM.read(2) != 255) player2Minutes = EEPROM.read(2);
     if (EEPROM.read(3) != 255) player2Seconds = EEPROM.read(3);
     if (EEPROM.read(4) != 255) increment = EEPROM.read(4);
+  }
+
+  delay(200);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Use previous");
+  lcd.setCursor(0, 1);
+  lcd.print("score?");
+  
+  checker1 = true, checker2 = false;
+  while (checker1) {
+    if (digitalRead(buttonP1) == HIGH) {
+      checker1 = false;
+      checker2 = true;
+    } else if (digitalRead(buttonP2) == HIGH) {
+      checker1 = false;
+    }
+  }
+
+  if (checker2) {
     if (EEPROM.read(5) != 255) whiteGames = EEPROM.read(5);
     if (EEPROM.read(6) != 255) blackGames = EEPROM.read(6);
   }
-
+  
+  lcd.clear();
   // Display initial starting screen
   updateScreen();
 }
@@ -214,6 +236,9 @@ void editTime() {
       setupNumber = 0;
       setupPlayer++;
     } else if (setupPlayer == 1) { // If player 2's time is done being set, move on to the increment time control
+      if (player1Minutes == 0 && player1Seconds == 0) { // Sets player 1's time to 10 minutes if it's left blank
+        player1Minutes = 10;
+      }
       if (player2Minutes == 0 && player2Seconds == 0) { // Sets player 2's time to player 1's if it's left blank
         player2Minutes = player1Minutes;
         player2Seconds = player1Seconds;
