@@ -37,7 +37,7 @@ Added:
 - Better colon blinking during game
 - Games counter (EEPROM storage)
 
-This chess clock allows you to set separate times for players 1 and 2 (although you can leave the times for player 2 blank if you want to have players 1 and 2 the same). 
+This chess clock allows you to set separate times for players 1 and 2 (although you can leave the times for player 2 blank if you want to have players 1 and 2 the same). Leaving player 1's time blank will set the time control to be 10 minutes (player 2's time can be set separately or not).
 When starting the chess clock and setting the time controls, use the player 1 button to decrement, the player 2 button to increment, and the Set button to set that time setting. You can also set the increment time (in seconds) 
 after setting player 1 and player 2's time. When the game is running, the Player 1 and Player 2 buttons will swap turns from black to white and vice versa, and the Set
 button will pause and unpause the game. There's also a Reset button (not coded, but included in both designs) that will reset the chess clock back from the start. The clock counts in centiseconds for high accuracy, but centiseconds are not displayed.
