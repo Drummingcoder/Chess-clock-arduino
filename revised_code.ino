@@ -194,12 +194,12 @@ void loop() {
                 // the centiseconds counter to only increment every centisecond and therefore count correctly
   } else {
     // If the game is not running (meaning that the time controls are being set up), execute this section of the code
-    
-    // Calls editTime() to change the values of the time control variables or advance the setting stage
-    editTime();
 
     // Calls updateScreen() to update the screen as the time variables change
     updateScreen();
+    
+    // Calls editTime() to change the values of the time control variables or advance the setting stage
+    editTime();
 
     // Checks each button to see if it's pressed, and sets the button variables to the appropriate values
     // Also, thanks to this if-else statement, when multiple buttons are pressed, player 1 button has 1st priority, and
@@ -257,13 +257,13 @@ void editTime() {
       // EEPROM.commit();
       // Might need above line on specific UNO versions
 
+      displayCurrentTime();
       lcd.clear();
     }
 
     delay(500); // Small delay before the game begins
   }
   if (buttonP2pressed) { // Increment button is pressed
-    lcd.clear();
     if (setupPlayer == 0) { // Player 1 (white)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
         player1Minutes++;
@@ -286,7 +286,6 @@ void editTime() {
     }
   }
   if (buttonP1pressed) { // Decrement button was pressed
-    lcd.clear();
     if (setupPlayer == 0) { // Player 1 (white)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
         player1Minutes--;
