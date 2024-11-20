@@ -65,6 +65,8 @@ void setup() {
     if (digitalRead(buttonP1) == HIGH) {
       checker1 = false;
       checker2 = true;
+      setupPlayer = 2;
+      setupNumber = 2;
     } else if (digitalRead(buttonP2) == HIGH) {
       checker1 = false;
     }
