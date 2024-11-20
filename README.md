@@ -28,7 +28,7 @@ Things to add:
 - Welcome Screen
 
 Added: 
-- Option to use previous time settings or not when setting up
+- Option to use previous time settings or not when setting up (Player 1 (white) or left button for YES, Player 2 (Black) or right button for NO)
 - Hexadecimal minutes up to 12, for 120 minutes (v2.0 only)
 - Start the timer (when the game starts) only when player 1 presses their button
 - Ability to reset the chess clock after timing out and also the option to play again with the same settings (just use the Reset button)
