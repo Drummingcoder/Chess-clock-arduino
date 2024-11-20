@@ -33,6 +33,7 @@ bool gameRunning = false, gamePaused = false, whiteWon = false, blackWon = false
 int player1Minutes = 0, player1Seconds = 0, player2Minutes = 0, player2Seconds = 0, increment = 0; // Store the time controls
 char player1Time[4] = "0000", player2Time[4] = "0000"; // Variables to control what is printed to the LED display
 int centiCounter1 = 0, centiCounter2 = 0; // Allows the clock to count in centiseconds for more accurate timing
+int whiteGames = 0, blackGames = 0;
 
 // Button states
 bool buttonP1pressed = false, buttonP2pressed = false, buttonP3pressed = false;
@@ -74,6 +75,8 @@ void setup() {
     if (EEPROM.read(2) != 255) player2Minutes = EEPROM.read(2);
     if (EEPROM.read(3) != 255) player2Seconds = EEPROM.read(3);
     if (EEPROM.read(4) != 255) increment = EEPROM.read(4);
+    if (EEPROM.read(5) != 255) whiteGames = EEPROM.read(5);
+    if (EEPROM.read(6) != 255) blackGames = EEPROM.read(6);
   }
 
   // Display initial starting screen
@@ -343,6 +346,8 @@ void advanceTime() {
       player1Seconds = 59;
     } else { // White's time has run out, so Black wins
       blackWon = true;
+      blackGames++;
+      if (blackGames != EEPROM.read(6)) EEPROM.write(6, blackGames);
     }
   } else if (currentPlayer == 1) { // Black's turn
     if (centiCounter2 < 10) {
@@ -356,6 +361,8 @@ void advanceTime() {
       player2Seconds = 59;
     } else { // Black's time has run out, so White wins
       whiteWon = true;
+      whiteGames++;
+      if (whiteGames != EEPROM.read(5)) EEPROM.write(5, whiteGames);
     }
   }
 
@@ -384,6 +391,8 @@ void displayCurrentTime() {
   lcd.print("<- W");
   lcd.setCursor(12, 0); // Display on the right side of the same row
   lcd.print("B ->");
+  lcd.setCursor(6, 1);
+  lcd.print(whiteGames + "-" + blackGames);
 
   // Player 1 (White) time display
   led_display1.clear();
