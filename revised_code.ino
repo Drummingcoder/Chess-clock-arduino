@@ -99,6 +99,8 @@ void loop() {
         player1Seconds -= 60;
       }
       currentPlayer = 1; // Change current player to black (player 2)
+      led_display1.drawColon(true);
+      led_display1.writeDisplay();
       tone(buzzer, 523);
       delay(10);
       noTone(buzzer);
@@ -109,6 +111,8 @@ void loop() {
         player2Seconds -= 60;
       }
       currentPlayer = 0; // Change current player to white (player 1)
+      led_display2.drawColon(true);
+      led_display2.writeDisplay();
       tone(buzzer, 523);
       delay(10);
       noTone(buzzer);
@@ -223,6 +227,8 @@ void editTime() {
       if (increment != EEPROM.read(4)) EEPROM.write(4, increment);
       // EEPROM.commit();
       // Might need above line on specific UNO versions
+
+      lcd.clear();
     }
 
     delay(500); // Small delay before the game begins
@@ -359,7 +365,19 @@ void advanceTime() {
 
 // This function is responsible for updating the screen while the game is running, called by advanceTime()
 void displayCurrentTime() {
-  if (player1Seconds == 59 || player2Seconds == 59) lcd.clear(); // Only blink the screen once either time reaches 59 seconds (minutes don't matter)
+  if (centiCounter1 == 0 && currentPlayer == 0) {
+    led_display1.drawColon(false);
+    led_display1.writeDisplay();
+  } else if (centiCounter1 == 5 && currentPlayer == 0) {
+    led_display1.drawColon(true);
+    led_display1.writeDisplay();
+  } else if (centiCounter2 == 0 && currentPlayer == 1) {
+    led_display2.drawColon(false);
+    led_display2.writeDisplay();
+  } else if (centiCounter2 == 5 && currentPlayer == 1) {
+    led_display2.drawColon(true);
+    led_display2.writeDisplay();
+  }
 
   //LCD display
   lcd.setCursor(0, 0);
@@ -372,7 +390,6 @@ void displayCurrentTime() {
   setTime(player1Minutes, true, true);
   setTime(player1Seconds, true, false);
   led_display1.println(player1Time);
-  led_display1.drawColon(true);
   led_display1.writeDisplay();
   
   // Player 2 (Black) time display
