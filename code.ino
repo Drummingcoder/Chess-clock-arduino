@@ -40,13 +40,28 @@ void setup() {
 
   // Initialize LcD screen
   lcd.begin(16, 2);
+  lcd.setCursor(0, 0);
+  lcd.print("Use previous?");
+  
+  // Check to use previous settings or not
+  bool checker1 = true, checker2 = false;
+  while (checker1) {
+    if (digitalRead(buttonP1) == HIGH) {
+      checker1 = false;
+      checker2 = true;
+    } else if (digitalRead(buttonP2) == HIGH) {
+      checker1 = false;
+    }
+  }
 
-  // Read EEPROM and initialize variables if EEPROM is not blank
-  if (EEPROM.read(0) != 255) player1Minutes = EEPROM.read(0);
-  if (EEPROM.read(1) != 255) player1Seconds = EEPROM.read(1);
-  if (EEPROM.read(2) != 255) player2Minutes = EEPROM.read(2);
-  if (EEPROM.read(3) != 255) player2Seconds = EEPROM.read(3);
-  if (EEPROM.read(4) != 255) increment = EEPROM.read(4);
+  if (checker2) {
+    // Read saved settings from EEPROM
+    if (EEPROM.read(0) != 255) player1Minutes = EEPROM.read(0);
+    if (EEPROM.read(1) != 255) player1Seconds = EEPROM.read(1);
+    if (EEPROM.read(2) != 255) player2Minutes = EEPROM.read(2);
+    if (EEPROM.read(3) != 255) player2Seconds = EEPROM.read(3);
+    if (EEPROM.read(4) != 255) increment = EEPROM.read(4);
+  }
 
   // Display initial starting screen
   updateScreen();
@@ -57,6 +72,15 @@ void loop() {
   // Big if-else statement checks if the game is running or not and executes appropriate code based on the result
   if (gameRunning) {
     // If the game is running, execute this section of the code
+
+    // Start the game only when player 1 presses the button
+    bool gameStarted = true;
+    while (gameStarted) {
+      if (digitalRead(buttonP1) == HIGH) {
+        gameStarted = false;
+        currentPlayer = 1;
+      }
+    }
 
     // Checks the states of the buttons, and executes the corresponding code to switch current player, or pause the game
     // Also, thanks to this if-else statement, when multiple buttons are pressed, player 1 button has 1st priority, and
@@ -186,6 +210,8 @@ void editTime() {
       if (player2Minutes != EEPROM.read(2)) EEPROM.write(2, player2Minutes);
       if (player2Seconds != EEPROM.read(3)) EEPROM.write(3, player2Seconds);
       if (increment != EEPROM.read(4)) EEPROM.write(4, increment);
+      // EEPROM.commit();
+      // Might need above line on specific UNO versions
     }
     
     delay(500); // Small delay before the game begins
