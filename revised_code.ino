@@ -35,6 +35,7 @@ char player1Time[4] = "0000", player2Time[4] = "0000"; // Variables to control w
 int centiCounter1 = 0, centiCounter2 = 0; // Allows the clock to count in centiseconds for more accurate timing
 int whiteGames = 0, blackGames = 0;
 bool gameStarted = true;
+bool pauseMenu = false;
 
 // Button states
 bool buttonP1pressed = false, buttonP2pressed = false, buttonP3pressed = false;
@@ -67,6 +68,7 @@ void setup() {
       checker2 = true;
       setupPlayer = 2;
       setupNumber = 2;
+      buttonP3pressed = true;
     } else if (digitalRead(buttonP2) == HIGH) {
       checker1 = false;
     }
@@ -178,19 +180,9 @@ void loop() {
         tone(buzzer, 523);
         delay(500);
       }
-
-      // Clear the screen and display "Game Paused" message
-      lcd.clear();
-      lcd.setCursor(0, 0);
-      lcd.print("Game Paused");
       
       delay(200); // Debounce delay
-      if (digitalRead(buttonP3) == HIGH) { // Pause button is pressed to unpause the game
-        gamePaused = false;
-        buttonP3pressed = false; // Ensure that the game isn't paused again in the advanceTime() function
-        lcd.clear();
-        delay(200); // Debounce delay
-      }
+      pauseMenu();
     }
     delay(100); // Debounce delay, serves dual purpose of ensuring that advanceTime() function is only run every 0.01s, allowing
                 // the centiseconds counter to only increment every centisecond and therefore count correctly
@@ -491,5 +483,110 @@ void setTime(int timeSetting, bool player1, bool minutes) {
       }
       player2Time[secondVar] = timeSetting % 10 + '0';
     }
+  }
+}
+
+void pauseMenu() {
+  if (digitalRead(buttonP1) == HIGH && (!pauseMenu)) {
+    pauseMenu = true;
+    setupPlayer = 0;
+    setupNumber = 0;
+    lcd.clear()
+    updateScreen();
+  }
+  if (digitalRead(buttonP3) == HIGH && (!pauseMenu)) { // Pause button is pressed to unpause the game
+  	gamePaused = false;
+    buttonP3pressed = false; // Ensure that the game isn't paused again in the advanceTime() function
+    lcd.clear();
+    delay(200); // Debounce delay
+  }
+  
+  if (pauseMenu) {
+    if (digitalRead(buttonP1) == HIGH) { // Decrement button is pressed
+      buttonP1pressed = true;
+      buttonP2pressed = false;
+      buttonP3pressed = false;
+    } else if (digitalRead(buttonP2) == HIGH) { // Increment button is pressed
+      buttonP1pressed = false;
+      buttonP2pressed = true;
+      buttonP3pressed = false;
+    } else if (digitalRead(buttonP3) == HIGH) { // SET button is pressed
+      buttonP1pressed = false;
+      buttonP2pressed = false;
+      buttonP3pressed = true;
+    } else { // No buttons are pressed
+      buttonP1pressed = false;
+      buttonP2pressed = false;
+      buttonP3pressed = false;
+    }
+    if (buttonP3pressed) { // SET button is pressed
+      if (setupNumber < 1) { // Minutes (of either player) were being set, move on to seconds
+        setupNumber++;
+      } else if (setupPlayer < 1) { // If execution moved here, seconds are done being set. If player 1's time was the one being set, move on to player 2.
+        setupNumber = 0;
+        setupPlayer++;
+      } else if (setupPlayer == 1) { // If player 2's time is done being set, move on to the increment time control
+        if (player1Minutes == 0 && player1Seconds == 0) player1Minutes = 10; // Sets player 1's time to 10 minutes if it's left blank
+        if (player2Minutes == 0 && player2Seconds == 0) { // Sets player 2's time to player 1's if it's left blank
+          player2Minutes = player1Minutes;
+          player2Seconds = player1Seconds;
+        }
+        setupPlayer++;
+        setupNumber = 2; // To ensure that the first if block (of this if-else tree) isn't triggered and pass a check later on
+        lcd.clear();
+      } else { // Increment time control is done being set, go back to pause menu
+        gameRunning = true;
+        // Clear the screen and display "Game Paused" message
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Game Paused");
+      }
+
+    delay(500); // Small delay before the game begins
+  }
+  if (buttonP2pressed) { // Increment button is pressed
+    if (setupPlayer == 0) { // Player 1 (white)'s time is being set
+      if (setupNumber == 0) { // Minutes are being set
+        player1Minutes++;
+        if (player1Minutes > 120) player1Minutes = 120; // If minutes are over 999, bring it back to 999
+      } else if (setupNumber == 1) { // Seconds are being set
+        player1Seconds++;
+        if (player1Seconds >= 60) player1Seconds = 59; // If seconds are over 59, bring it back to 59
+      }
+    } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
+      if (setupNumber == 0) { // Minutes are being set
+        player2Minutes++;
+        if (player2Minutes > 120) player2Minutes = 120; // If minutes are over 999, bring it back to 999
+      } else if (setupNumber == 1) { // Seconds are being set
+        player2Seconds++;
+        if (player2Seconds >= 60) player2Seconds = 59; // If seconds are over 59, bring it back to 59
+      }
+    } else if (setupNumber == 2) { // Increment time control is being set
+      increment++;
+      if (increment > 60) increment = 60; // If increment is over 60, bring it back to 60
+    }
+  }
+  if (buttonP1pressed) { // Decrement button was pressed
+      if (setupPlayer == 0) { // Player 1 (white)'s time is being set
+        if (setupNumber == 0) { // Minutes are being set
+          player1Minutes--;
+          if (player1Minutes < 0) player1Minutes = 0; // If minutes are negative, bring it back to 0
+        } else if (setupNumber == 1) { // Seconds are being set
+          player1Seconds--;
+          if (player1Seconds < 0) player1Seconds = 0; // If seconds are negative, bring it back to 0
+        }
+      } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
+        if (setupNumber == 0) { // Minutes are being set
+          player2Minutes--;
+          if (player2Minutes < 0) player2Minutes = 0; // If minutes are negative, bring it back to 0
+        } else if (setupNumber == 1) { // Seconds are being set
+          player2Seconds--;
+          if (player2Seconds < 0) player2Seconds = 0; // If seconds are negative, bring it back to 0
+        }
+      } else if (setupNumber == 2) {
+      	increment--;
+      	if (increment < 0) increment = 0; // If increment is negative, bring it back to 0
+      }
+  	}
   }
 }
