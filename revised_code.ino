@@ -291,7 +291,11 @@ void editTime() {
   if (buttonP1pressed) { // Decrement button was pressed
     if (setupPlayer == 0) { // Player 1 (white)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
-        player1Minutes--;
+        if (player1Minutes >= 20 && player1Minutes <= 30) player1Minutes -= 5;
+        else if (player1Minutes == 40) player1Minutes -= 10;
+        else if (player1Minutes <= 50) player1Minutes -= 5;
+        else if (player1Minutes >= 60) player1Minutes -= 10;
+        else player1Minutes--;
         if (player1Minutes < 0) player1Minutes = 0; // If minutes are negative, bring it back to 0
       } else if (setupNumber == 1) { // Seconds are being set
         player1Seconds--;
