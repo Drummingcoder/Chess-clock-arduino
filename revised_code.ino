@@ -525,38 +525,29 @@ void pauseMenu() {
       buttonP3pressed = false;
     }
     if (buttonP3pressed) { // SET button is pressed
-    if (setupNumber < 1) { // Minutes (of either player) were being set, move on to seconds
-      setupNumber++;
-    } else if (setupPlayer < 1) { // If execution moved here, seconds are done being set. If player 1's time was the one being set, move on to player 2.
-      setupNumber = 0;
-      setupPlayer++;
-    } else if (setupPlayer == 1) { // If player 2's time is done being set, move on to the increment time control
-      if (player1Minutes == 0 && player1Seconds == 0) { // Sets player 1's time to 10 minutes if it's left blank
-        player1Minutes = 10;
-      }
-      if (player2Minutes == 0 && player2Seconds == 0) { // Sets player 2's time to player 1's if it's left blank
-        player2Minutes = player1Minutes;
-        player2Seconds = player1Seconds;
-      }
-      setupPlayer++;
-      setupNumber = 2; // To ensure that the first if block (of this if-else tree) isn't triggered and pass a check later on
-      lcd.clear();
-    } else { // Increment time control is done being set, start the game
-      gameRunning = true;
+      if (setupNumber < 1) { // Minutes (of either player) were being set, move on to seconds
+        setupNumber++;
+      } else if (setupPlayer < 1) { // If execution moved here, seconds are done being set. If player 1's time was the one being set, move on to player 2.
+        setupNumber = 0;
+        setupPlayer++;
+      } else if (setupPlayer == 1) { // If player 2's time is done being set, move on to the increment time control
+        if (player1Minutes == 0 && player1Seconds == 0) player1Minutes = 10; // Sets player 1's time to 10 minutes if it's left blank
+        if (player2Minutes == 0 && player2Seconds == 0) { // Sets player 2's time to player 1's if it's left blank
+          player2Minutes = player1Minutes;
+          player2Seconds = player1Seconds;
+        }
+        setupPlayer++;
+        setupNumber = 2; // To ensure that the first if block (of this if-else tree) isn't triggered and pass a check later on
+        lcd.clear();
+      } else { // Increment time control is done being set, start the game
+        gameRunning = true;
       
-      // Write variables to memory only if they have changed
-      if (player1Minutes != EEPROM.read(0)) EEPROM.write(0, player1Minutes);
-      if (player1Seconds != EEPROM.read(1)) EEPROM.write(1, player1Seconds);
-      if (player2Minutes != EEPROM.read(2)) EEPROM.write(2, player2Minutes);
-      if (player2Seconds != EEPROM.read(3)) EEPROM.write(3, player2Seconds);
-      if (increment != EEPROM.read(4)) EEPROM.write(4, increment);
-      
-      lcd.clear();
-      displayCurrentTime();
-    }
+        lcd.clear();
+        displayCurrentTime();
+      }
 
-    delay(500); // Small delay before the game begins
-  }
+      delay(500); // Small delay before the game begins
+    }
   if (buttonP2pressed) { // Increment button is pressed
     if (setupPlayer == 0) { // Player 1 (white)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
@@ -567,19 +558,19 @@ void pauseMenu() {
         if (player1Seconds >= 60) player1Seconds = 59; // If seconds are over 59, bring it back to 59
       }
     } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
-      if (setupNumber == 0) { // Minutes are being set
-        player2Minutes++;
-        if (player2Minutes > 120) player2Minutes = 120; // If minutes are over 999, bring it back to 999
-      } else if (setupNumber == 1) { // Seconds are being set
-        player2Seconds++;
-        if (player2Seconds >= 60) player2Seconds = 59; // If seconds are over 59, bring it back to 59
+        if (setupNumber == 0) { // Minutes are being set
+          player2Minutes++;
+          if (player2Minutes > 120) player2Minutes = 120; // If minutes are over 999, bring it back to 999
+        } else if (setupNumber == 1) { // Seconds are being set
+          player2Seconds++;
+          if (player2Seconds >= 60) player2Seconds = 59; // If seconds are over 59, bring it back to 59
+        }
+      } else if (setupNumber == 2) { // Increment time control is being set
+        increment++;
+        if (increment > 60) increment = 60; // If increment is over 60, bring it back to 60
       }
-    } else if (setupNumber == 2) { // Increment time control is being set
-      increment++;
-      if (increment > 60) increment = 60; // If increment is over 60, bring it back to 60
     }
-  }
-  if (buttonP1pressed) { // Decrement button was pressed
+    if (buttonP1pressed) { // Decrement button was pressed
       if (setupPlayer == 0) { // Player 1 (white)'s time is being set
         if (setupNumber == 0) { // Minutes are being set
           player1Minutes--;
@@ -600,6 +591,6 @@ void pauseMenu() {
       	increment--;
       	if (increment < 0) increment = 0; // If increment is negative, bring it back to 0
       }
-  }
+    }
   }
 }
