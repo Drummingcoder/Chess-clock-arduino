@@ -30,6 +30,7 @@ Things to add:
 Added: 
 - Option to use previous time settings or not when setting up (Player 1 (white) or left button for YES, Player 2 (Black) or right button for NO)
   - Option to use previous game score or not is separate. If not used and new chess game is started and ended, previous game scores will be overwritten.
+- When using previous time settings, automatically skip to start game screen
 - Hexadecimal minutes up to 12, for 120 minutes (v2.0 only)
 - Start the timer (when the game starts) only when player 1 presses their button
 - Ability to reset the chess clock after timing out and also the option to play again with the same settings (just use the Reset button)
