@@ -269,7 +269,11 @@ void editTime() {
   if (buttonP2pressed) { // Increment button is pressed
     if (setupPlayer == 0) { // Player 1 (white)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
-        player1Minutes++;
+        if (player1Minutes >= 15 && player1Minutes <= 25) player1Minutes += 5;
+        else if (player1Minutes == 30) player1Minutes += 10;
+        else if (player1Minutes < 50) player1Minutes += 5;
+        else if (player1Minutes >= 50) player1Minutes += 10;
+        else player1Minutes++;
         if (player1Minutes > 120) player1Minutes = 120; // If minutes are over 120, bring it back to 120
       } else if (setupNumber == 1) { // Seconds are being set
         player1Seconds++;
@@ -277,14 +281,19 @@ void editTime() {
       }
     } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
-        player2Minutes++;
+        if (player2Minutes >= 15 && player2Minutes <= 25) player2Minutes += 5;
+        else if (player2Minutes == 30) player2Minutes += 10;
+        else if (player2Minutes < 50) player2Minutes += 5;
+        else if (player2Minutes >= 50) player2Minutes += 10;
+        else player2Minutes++;
         if (player2Minutes > 120) player2Minutes = 120; // If minutes are over 120, bring it back to 120
       } else if (setupNumber == 1) { // Seconds are being set
         player2Seconds++;
         if (player2Seconds >= 60) player2Seconds = 59; // If seconds are over 59, bring it back to 59
       }
     } else if (setupNumber == 2) { // Increment time control is being set
-      increment++;
+      if (increment >= 20) increment += 5;
+      else increment++;
       if (increment > 60) increment = 60; // If increment is over 60, bring it back to 60
     }
   }
@@ -303,14 +312,19 @@ void editTime() {
       }
     } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
-        player2Minutes--;
+        if (player2Minutes >= 20 && player2Minutes <= 30) player2Minutes -= 5;
+        else if (player2Minutes == 40) player2Minutes -= 10;
+        else if (player2Minutes <= 50) player2Minutes -= 5;
+        else if (player2Minutes >= 60) player2Minutes -= 10;
+        else player2Minutes--;
         if (player2Minutes < 0) player2Minutes = 0; // If minutes are negative, bring it back to 0
       } else if (setupNumber == 1) { // Seconds are being set
         player2Seconds--;
         if (player2Seconds < 0) player2Seconds = 0; // If seconds are negative, bring it back to 0
       }
     } else if (setupNumber == 2) {
-      increment--;
+      if (increment <= 20) increment -= 5;
+      else increment--;
       if (increment < 0) increment = 0; // If increment is negative, bring it back to 0
     }
   }
