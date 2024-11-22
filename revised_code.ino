@@ -271,7 +271,7 @@ void editTime() {
       if (setupNumber == 0) { // Minutes are being set
         if (player1Minutes >= 15 && player1Minutes <= 25) player1Minutes += 5;
         else if (player1Minutes == 30) player1Minutes += 10;
-        else if (player1Minutes < 50) player1Minutes += 5;
+        else if (player1Minutes >= 40 && player1Minutes < 50) player1Minutes += 5;
         else if (player1Minutes >= 50) player1Minutes += 10;
         else player1Minutes++;
         if (player1Minutes > 120) player1Minutes = 120; // If minutes are over 120, bring it back to 120
@@ -284,7 +284,7 @@ void editTime() {
       if (setupNumber == 0) { // Minutes are being set
         if (player2Minutes >= 15 && player2Minutes <= 25) player2Minutes += 5;
         else if (player2Minutes == 30) player2Minutes += 10;
-        else if (player2Minutes < 50) player2Minutes += 5;
+        else if (player2Minutes >= 40 && player2Minutes < 50) player2Minutes += 5;
         else if (player2Minutes >= 50) player2Minutes += 10;
         else player2Minutes++;
         if (player2Minutes > 120) player2Minutes = 120; // If minutes are over 120, bring it back to 120
@@ -304,7 +304,7 @@ void editTime() {
       if (setupNumber == 0) { // Minutes are being set
         if (player1Minutes >= 20 && player1Minutes <= 30) player1Minutes -= 5;
         else if (player1Minutes == 40) player1Minutes -= 10;
-        else if (player1Minutes <= 50) player1Minutes -= 5;
+        else if (player1Minutes == 45 || player1Minutes == 50) player1Minutes -= 5;
         else if (player1Minutes >= 60) player1Minutes -= 10;
         else player1Minutes--;
         if (player1Minutes < 0) player1Minutes = 0; // If minutes are negative, bring it back to 0
@@ -317,7 +317,7 @@ void editTime() {
       if (setupNumber == 0) { // Minutes are being set
         if (player2Minutes >= 20 && player2Minutes <= 30) player2Minutes -= 5;
         else if (player2Minutes == 40) player2Minutes -= 10;
-        else if (player2Minutes <= 50) player2Minutes -= 5;
+        else if (player2Minutes == 45 || player2Minutes == 50) player2Minutes -= 5;
         else if (player2Minutes >= 60) player2Minutes -= 10;
         else player2Minutes--;
         if (player2Minutes < 0) player2Minutes = 0; // If minutes are negative, bring it back to 0
