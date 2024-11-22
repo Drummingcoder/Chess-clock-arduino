@@ -34,7 +34,7 @@ int player1Minutes = 0, player1Seconds = 0, player2Minutes = 0, player2Seconds =
 char player1Time[5] = "0000", player2Time[5] = "0000"; // Variables to control what is printed to the LED display
 int centiCounter1 = 0, centiCounter2 = 0; // Allows the clock to count in centiseconds for more accurate timing
 int whiteGames = 0, blackGames = 0;
-bool gameStarted = true;
+bool gameStarted = true, beepOn = true, notBeeping = false;
 
 // Button states
 bool buttonP1pressed = false, buttonP2pressed = false, buttonP3pressed = false;
@@ -55,6 +55,30 @@ void setup() {
 
   // Initialize LCD
   lcd.begin(16, 2);
+
+  lcd.setCursor(0, 0);
+  lcd.print("Welcome! Have");
+  lcd.setCursor(0, 1);
+  lcd.print("a good game!");
+  delay(2000);
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Turn beep off?");
+
+  bool checker = true;
+  while (checker) {
+    if (digitalRead(buttonP1) == HIGH) {
+      checker = false;
+      beepOn = false;
+    } else if (digitalRead(buttonP2) == HIGH) {
+      checker = false;
+    }
+  }
+
+  // Check to use previous settings or not
+  delay(200);
+  lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Use previous");
   lcd.setCursor(0, 1);
@@ -131,9 +155,11 @@ void loop() {
       currentPlayer = 1; // Change current player to black (player 2)
       led_display1.drawColon(true);
       led_display1.writeDisplay();
-      tone(buzzer, 523);
-      delay(10);
-      noTone(buzzer);
+      if (beepOn) {
+        tone(buzzer, 523);
+        delay(10);
+        noTone(buzzer);
+      }
     } else if (digitalRead(buttonP2) == HIGH && currentPlayer != 0) { // Player 2 button is pressed and the current player is player 2
       player2Seconds += increment;
       while (player2Seconds >= 60) {
@@ -143,9 +169,11 @@ void loop() {
       currentPlayer = 0; // Change current player to white (player 1)
       led_display2.drawColon(true);
       led_display2.writeDisplay();
-      tone(buzzer, 523);
-      delay(10);
-      noTone(buzzer);
+      if (beepOn) {
+        tone(buzzer, 523);
+        delay(10);
+        noTone(buzzer);
+      }
     } else if (digitalRead(buttonP3) == HIGH) { // Pause button is pressed
       buttonP3pressed = true; // This variable is checked in advanceTime(); so no action is taken regarding this variable in this function
     } else { // No buttons are pressed
@@ -175,10 +203,12 @@ void loop() {
     // otherwise just pauses execution infinitely (which means that the game is over)
     while (gamePaused) {
       while (whiteWon || blackWon) { // Infinitely makes the buzzer beep until chess clock is reset or turned off
-        noTone(buzzer);
-        delay(500);
-        tone(buzzer, 523);
-        delay(500);
+        if (beepOn) {
+          noTone(buzzer);
+       	  delay(500);
+          tone(buzzer, 523);
+          delay(500);
+        }
       }
 
       // Clear the screen and display "Game Paused" message
@@ -434,6 +464,16 @@ void displayCurrentTime() {
   } else if (centiCounter2 == 5 && currentPlayer == 1) {
     led_display2.drawColon(true);
     led_display2.writeDisplay();
+  }
+
+  if ((player1Minutes == 1 && player1Seconds == 0) || (player2Minutes == 1 && player2Seconds == 0)) {
+    tone(buzzer, 523);
+    delay(10);
+    noTone(buzzer);
+  } else if ((player1Minutes == 0 && player1Seconds == 10) || (player2Minutes == 0 && player2Seconds == 10)) {
+    tone(buzzer, 523);
+    delay(10);
+    noTone(buzzer);
   }
 
   //LCD display
