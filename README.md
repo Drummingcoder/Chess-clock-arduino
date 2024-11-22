@@ -20,8 +20,6 @@ Things to add:
 - Time difference on LED display (v2.0 only)
 - End game early using Pause menu and increment game counter accordingly
 - 1 minute warning?
-- Increment minutes by 5 after 15, and by 10 after 30 or preset
-- Increment seconds by 5 after 20, but before 45 or preset
 - Ending buzzer melody?
 - Some way to display PST time???
 - Option to turn beep off
@@ -37,6 +35,9 @@ Added:
 - A beep every time a turn is made
 - Better colon blinking during game
 - Games counter (EEPROM storage)
+- Increment minutes by 5 after 15 mins, by 10 after 30, by 5 after 40, and by 10 after 50
+- Increment seconds by 5 after 20 secs, but before 45
+- Increment the increment by 5 after 15 secs
 
 This chess clock allows you to set separate times for players 1 and 2 (although you can leave the times for player 2 blank if you want to have players 1 and 2 the same). Leaving player 1's time blank will set the time control to be 10 minutes (player 2's time can be set separately or not).
 When starting the chess clock and setting the time controls, use the player 1 button to decrement, the player 2 button to increment, and the Set button to set that time setting. You can also set the increment time (in seconds) 
