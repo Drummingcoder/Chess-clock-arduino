@@ -294,7 +294,7 @@ void editTime() {
         if (player2Seconds >= 60) player2Seconds = 59; // If seconds are over 59, bring it back to 59
       }
     } else if (setupNumber == 2) { // Increment time control is being set
-      if (increment >= 20) increment += 5;
+      if (increment >= 15) increment += 5;
       else increment++;
       if (increment > 60) increment = 60; // If increment is over 60, bring it back to 60
     }
