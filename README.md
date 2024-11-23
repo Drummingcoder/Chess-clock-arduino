@@ -14,6 +14,8 @@ TLDR Features:
 
 Things to add:
 - Add a centisecond display under 20 secs
+- Add a each person has... setting
+- Revamp settings so that only one button has to be pressed (if trying to go fast)
 - Blinking minutes or seconds when setting up
 - Ending buzzer melody?
 - Better time handling using millis(), using delay() for now
