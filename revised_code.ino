@@ -613,12 +613,12 @@ void setTime(int timeSetting, bool player1, bool minutes) {
   }
 }
 
-void pauseMenu() {
+void menuPause() {
   if ((digitalRead(buttonP1) == HIGH) && (!pauseMenu)) {
     pauseMenu = true;
     setupPlayer = 0;
     setupNumber = 0;
-    lcd.clear()
+    lcd.clear();
     updateScreen();
   }
   if ((digitalRead(buttonP3) == HIGH) && (!pauseMenu)) { // Pause button is pressed to unpause the game
