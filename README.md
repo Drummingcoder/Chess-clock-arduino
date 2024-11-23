@@ -15,12 +15,10 @@ TLDR Features:
 Things to add:
 - Add a centisecond display (v1.0 only)
 - Blinking minutes or seconds when setting up
-- Time difference on LED display (v2.0 only)
 - End game early using Pause menu and increment game counter accordingly
 - Ending buzzer melody?
-- Ability to add or subtract time during a game while in the Pause menu
+- Ability to add or subtract time during a game while in the Pause menu (in progress)
 - Better time handling using millis(), using delay() for now
-- Some way to display PST time???
 
 Added: 
 - Option to use previous time settings or not when setting up (Player 1 (white) or left button for YES, Player 2 (Black) or right button for NO)
@@ -38,6 +36,7 @@ Added:
 - Option to turn beep off (Button 1 for YES to turn beep off, Button 2 for NO to leave beep on)
 - Welcome Screen
 - 1 minute and 10 seconds warning
+- Time difference on LED display (v2.0 only)
 
 This chess clock allows you to set separate times for players 1 and 2 (although you can leave the times for player 2 blank if you want to have players 1 and 2 the same). Leaving player 1's time blank will set the time control to be 10 minutes (player 2's time can be set separately or not).
 When starting the chess clock and setting the time controls, use the player 1 button to decrement, the player 2 button to increment, and the Set button to set that time setting. You can also set the increment time (in seconds) 
