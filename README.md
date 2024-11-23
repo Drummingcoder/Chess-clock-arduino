@@ -31,7 +31,6 @@ Added:
 - Better colon blinking during game
 - Games counter (EEPROM storage)
 - Increment minutes by 5 after 15 mins, by 10 after 30, by 5 after 40, and by 10 after 50
-- Increment seconds by 5 after 20 secs, but before 45
 - Increment the increment by 5 after 15 secs
 - Option to turn beep off (Button 1 for YES to turn beep off, Button 2 for NO to leave beep on)
 - Welcome Screen
