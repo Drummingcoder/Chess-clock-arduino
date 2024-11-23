@@ -215,11 +215,6 @@ void loop() {
         }
       }
 
-      // Clear the screen and display "Game Paused" message
-      lcd.clear();
-      lcd.setCursor(0, 0);
-      lcd.print("Game Paused");
-
       delay(200); // Debounce delay
       menuPause();
     }
@@ -406,6 +401,7 @@ void updateScreen() {
 void advanceTime() {
   if (buttonP3pressed) { // Pause button is pressed
     gamePaused = true;
+    lcd.clear();
     return; // Return execution to loop()
   }
 
@@ -605,6 +601,11 @@ void setTime(int timeSetting, bool player1, bool minutes) {
 }
 
 void menuPause() {
+  if (!pauseMenu) {
+    // Display "Game Paused" message
+    lcd.setCursor(0, 0);
+    lcd.print("Game Paused");
+  }
   if ((digitalRead(buttonP1) == HIGH) && (!pauseMenu)) {
     pauseMenu = true;
     setupPlayer = 0;
@@ -637,6 +638,9 @@ void menuPause() {
       buttonP2pressed = false;
       buttonP3pressed = false;
     }
+
+    updateScreen();
+    
     if (buttonP3pressed) { // SET button is pressed
       if (setupNumber < 1) { // Minutes (of either player) were being set, move on to seconds
         setupNumber++;
@@ -647,10 +651,11 @@ void menuPause() {
         setupPlayer++;
         setupNumber = 2; // To ensure that the first if block (of this if-else tree) isn't triggered and pass a check later on
         lcd.clear();
-      } else { // Increment time control is done being set, start the game
-        gameRunning = true;
+      } else { // Increment time control is done being set
         lcd.clear();
+        pauseMenu = false;
         displayCurrentTime();
+        lcd.clear();
       }
 
       delay(500); // Small delay before the game begins
