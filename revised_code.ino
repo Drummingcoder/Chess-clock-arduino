@@ -467,13 +467,17 @@ void displayCurrentTime() {
   }
 
   if ((player1Minutes == 1 && player1Seconds == 0) || (player2Minutes == 1 && player2Seconds == 0)) {
-    tone(buzzer, 523);
-    delay(10);
-    noTone(buzzer);
+    if (beepOn) {
+      tone(buzzer, 523);
+      delay(10);
+      noTone(buzzer);
+    }
   } else if ((player1Minutes == 0 && player1Seconds == 10) || (player2Minutes == 0 && player2Seconds == 10)) {
-    tone(buzzer, 523);
-    delay(10);
-    noTone(buzzer);
+    if (beepOn) {
+      tone(buzzer, 523);
+      delay(10);
+      noTone(buzzer);
+    }
   }
 
   //LCD display
