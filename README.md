@@ -1,4 +1,4 @@
-f# Arduino Uno Chess Clock
+# Arduino Uno Chess Clock
 
 The first version (v1.0) of my code (code.ino) is made for a chess clock with the following design: 
 https://www.tinkercad.com/things/izdj3lSTSRr-my-chess-clock
