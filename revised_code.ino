@@ -274,6 +274,12 @@ void editTime() {
       setupNumber = 0;
       setupPlayer++;
     } else if (setupPlayer == 1) { // If player 2's time is done being set, move on to the increment time control
+      setupPlayer++;
+      setupNumber = 2; // To ensure that the first if block (of this if-else tree) isn't triggered and pass a check later on
+      lcd.clear();
+    } else { // Increment time control is done being set, start the game
+      gameRunning = true;
+      
       if (player1Minutes == 0 && player1Seconds == 0) { // Sets player 1's time to 10 minutes if it's left blank
         player1Minutes = 10;
       }
@@ -281,11 +287,6 @@ void editTime() {
         player2Minutes = player1Minutes;
         player2Seconds = player1Seconds;
       }
-      setupPlayer++;
-      setupNumber = 2; // To ensure that the first if block (of this if-else tree) isn't triggered and pass a check later on
-      lcd.clear();
-    } else { // Increment time control is done being set, start the game
-      gameRunning = true;
       
       // Write variables to memory only if they have changed
       if (player1Minutes != EEPROM.read(0)) EEPROM.write(0, player1Minutes);
@@ -456,26 +457,12 @@ void advanceTime() {
 
 // This function is responsible for updating the screen while the game is running, called by advanceTime()
 void displayCurrentTime() {
-  if (centiCounter1 == 0 && currentPlayer == 0) {
-    led_display1.drawColon(false);
-    led_display1.writeDisplay();
-  } else if (centiCounter1 == 5 && currentPlayer == 0) {
-    led_display1.drawColon(true);
-    led_display1.writeDisplay();
-  } else if (centiCounter2 == 0 && currentPlayer == 1) {
-    led_display2.drawColon(false);
-    led_display2.writeDisplay();
-  } else if (centiCounter2 == 5 && currentPlayer == 1) {
-    led_display2.drawColon(true);
-    led_display2.writeDisplay();
-  }
-
   if (beeping && centiBeepCounter != 10) {
     centiBeepCounter++;
   } else if (beeping && centiBeepCounter == 10) {
     noTone(buzzer);
     beeping = false;
-  }                  
+  }               
 
   if (((player1Minutes == 1 && player1Seconds == 0) && currentPlayer == 0) || ((player2Minutes == 1 && player2Seconds == 0) && currentPlayer == 1)) {
     if (beepOn) {
@@ -500,16 +487,70 @@ void displayCurrentTime() {
   lcd.print(whiteGames);
   lcd.print("- ");
   lcd.print(blackGames);
+  
+  // Calculate time difference
+  lcd.setCursor(5, 1);
+  int diffMinutes, diffSeconds, firstMinutes, firstSeconds, secondMinutes, secondSeconds;
+  if (currentPlayer == 0) { // White's turn
+    firstMinutes = player1Minutes;
+    firstSeconds = player1Seconds;
+    secondMinutes = player2Minutes;
+    secondSeconds = player2Seconds;
+  } else {
+    firstMinutes = player2Minutes;
+    firstSeconds = player2Seconds;
+    secondMinutes = player1Minutes;
+    secondSeconds = player1Seconds;
+  }
+  
+  diffMinutes = firstMinutes - secondMinutes;
+  diffSeconds = firstSeconds - secondSeconds;
+
+  if (diffSeconds < 0 && diffMinutes > 0) {
+    diffMinutes--;
+    diffSeconds += 60;
+  } else if (diffSeconds > 0 && diffMinutes < 0) {
+    diffMinutes++;
+    diffSeconds -= 60;
+  }
+    
+
+  if ((diffMinutes > 0) || (diffMinutes == 0 && diffSeconds >= 0)) {
+    lcd.print("+");
+  } else if ((diffMinutes < 0) || (diffMinutes == 0 && diffSeconds < 0)) {
+    lcd.print("-");
+  }
+
+  if (diffMinutes < 0) diffMinutes *= -1;
+  if (diffSeconds < 0) diffSeconds *= -1;
+    
+  if (diffMinutes < 10) lcd.print("0");
+  lcd.print(diffMinutes);
+  lcd.print(":");
+  if (diffSeconds < 10) lcd.print("0");
+  lcd.print(diffSeconds);
 
   // Player 1 (White) time display
   led_display1.clear();
+  led_display2.clear();
+  if (centiCounter1 < 5 && currentPlayer == 0) {
+    led_display1.drawColon(false);
+    led_display2.drawColon(true);
+  } else {
+    led_display1.drawColon(true);
+  } 
+  if (centiCounter2 < 5 && currentPlayer == 1) {
+    led_display2.drawColon(false);
+    led_display1.drawColon(true);
+  } else {
+    led_display2.drawColon(true);
+  }
   setTime(player1Minutes, true, true);
   setTime(player1Seconds, true, false);
   led_display1.println(player1Time);
   led_display1.writeDisplay();
   
   // Player 2 (Black) time display
-  led_display2.clear();
   setTime(player2Minutes, false, true);
   setTime(player2Seconds, false, false);
   led_display2.println(player2Time);
