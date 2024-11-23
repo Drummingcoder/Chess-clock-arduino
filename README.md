@@ -13,7 +13,7 @@ TLDR Features:
 - The difference between v1.0 and v2.0 is that v2.0 has two additional displays to show Player 1 and 2 times separately
 
 Things to add:
-- Add a centisecond display (v1.0 only)
+- Add a centisecond display under 20 secs
 - Blinking minutes or seconds when setting up
 - End game early using Pause menu and increment game counter accordingly
 - Ending buzzer melody?
