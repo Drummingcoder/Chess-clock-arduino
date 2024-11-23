@@ -32,9 +32,9 @@ int currentPlayer = 0; // 0 for Player 1 (White), 1 for Player 2 (Black)
 bool gameRunning = false, gamePaused = false, whiteWon = false, blackWon = false; // Various check variables to check condition of the game
 int player1Minutes = 0, player1Seconds = 0, player2Minutes = 0, player2Seconds = 0, increment = 0; // Store the time controls
 char player1Time[5] = "0000", player2Time[5] = "0000"; // Variables to control what is printed to the LED display
-int centiCounter1 = 0, centiCounter2 = 0; // Allows the clock to count in centiseconds for more accurate timing
+int centiCounter1 = 0, centiCounter2 = 0, centiBeepCounter = 0; // Allows the clock to count in centiseconds for more accurate timing
 int whiteGames = 0, blackGames = 0;
-bool gameStarted = true, beepOn = true, notBeeping = false;
+bool gameStarted = true, beepOn = true, beeping = false;
 
 // Button states
 bool buttonP1pressed = false, buttonP2pressed = false, buttonP3pressed = false;
@@ -157,8 +157,10 @@ void loop() {
       led_display1.writeDisplay();
       if (beepOn) {
         tone(buzzer, 523);
-        delay(10);
+        delay(100);
         noTone(buzzer);
+        beeping = false;
+        centiBeepCounter = 0;
       }
     } else if (digitalRead(buttonP2) == HIGH && currentPlayer != 0) { // Player 2 button is pressed and the current player is player 2
       player2Seconds += increment;
@@ -171,8 +173,10 @@ void loop() {
       led_display2.writeDisplay();
       if (beepOn) {
         tone(buzzer, 523);
-        delay(10);
+        delay(100);
         noTone(buzzer);
+        beeping = false;
+        centiBeepCounter = 0;
       }
     } else if (digitalRead(buttonP3) == HIGH) { // Pause button is pressed
       buttonP3pressed = true; // This variable is checked in advanceTime(); so no action is taken regarding this variable in this function
@@ -466,17 +470,24 @@ void displayCurrentTime() {
     led_display2.writeDisplay();
   }
 
-  if ((player1Minutes == 1 && player1Seconds == 0) || (player2Minutes == 1 && player2Seconds == 0)) {
+  if (beeping && centiBeepCounter != 10) {
+    centiBeepCounter++;
+  } else if (beeping && centiBeepCounter == 10) {
+    noTone(buzzer);
+    beeping = false;
+  }                  
+
+  if (((player1Minutes == 1 && player1Seconds == 0) && currentPlayer == 0) || ((player2Minutes == 1 && player2Seconds == 0) && currentPlayer == 1)) {
     if (beepOn) {
       tone(buzzer, 523);
-      delay(10);
-      noTone(buzzer);
+      centiBeepCounter = 0;
+      beeping = true;
     }
-  } else if ((player1Minutes == 0 && player1Seconds == 10) || (player2Minutes == 0 && player2Seconds == 10)) {
+  } else if (((player1Minutes == 0 && player1Seconds == 10) && currentPlayer == 0) || ((player2Minutes == 0 && player2Seconds == 10) && currentPlayer == 1)) {
     if (beepOn) {
       tone(buzzer, 523);
-      delay(10);
-      noTone(buzzer);
+      centiBeepCounter = 0;
+      beeping = true;
     }
   }
 
@@ -485,7 +496,7 @@ void displayCurrentTime() {
   lcd.print("<- W");
   lcd.setCursor(12, 0); // Display on the right side of the same row
   lcd.print("B ->");
-  lcd.setCursor(6, 1);
+  lcd.setCursor(6, 0);
   lcd.print(whiteGames);
   lcd.print("- ");
   lcd.print(blackGames);
