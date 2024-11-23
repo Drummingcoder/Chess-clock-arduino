@@ -31,6 +31,7 @@ int setupNumber = 0;  // Controls from 0 to 1
 int currentPlayer = 0; // 0 for Player 1 (White), 1 for Player 2 (Black)
 bool gameRunning = false, gamePaused = false, whiteWon = false, blackWon = false; // Various check variables to check condition of the game
 int player1Minutes = 0, player1Seconds = 0, player2Minutes = 0, player2Seconds = 0, increment = 0; // Store the time controls
+int clone1, clone1s, clone2, clone2s;
 char player1Time[5] = "0000", player2Time[5] = "0000"; // Variables to control what is printed to the LED display
 int centiCounter1 = 0, centiCounter2 = 0, centiBeepCounter = 0; // Allows the clock to count in centiseconds for more accurate timing
 int whiteGames = 0, blackGames = 0;
@@ -277,6 +278,11 @@ void editTime() {
         player2Minutes = player1Minutes;
         player2Seconds = player1Seconds;
       }
+
+      clone1 = player1Minutes;
+      clone1s = player1Seconds;
+      clone2 = player2Minutes;
+      clone2s = player2Seconds;
       
       // Write variables to memory only if they have changed
       if (player1Minutes != EEPROM.read(0)) EEPROM.write(0, player1Minutes);
@@ -419,6 +425,7 @@ void advanceTime() {
     } else { // White's time has run out, so Black wins
       blackWon = true;
       blackGames++;
+      if (whiteGames != EEPROM.read(5)) EEPROM.write(5, whiteGames);
       if (blackGames != EEPROM.read(6)) EEPROM.write(6, blackGames);
     }
   } else if (currentPlayer == 1) { // Black's turn
@@ -435,6 +442,7 @@ void advanceTime() {
       whiteWon = true;
       whiteGames++;
       if (whiteGames != EEPROM.read(5)) EEPROM.write(5, whiteGames);
+      if (blackGames != EEPROM.read(6)) EEPROM.write(6, blackGames);
     }
   }
 
@@ -612,12 +620,70 @@ void menuPause() {
     setupNumber = 0;
     lcd.clear();
     updateScreen();
-  }
-  if ((digitalRead(buttonP3) == HIGH) && (!pauseMenu)) { // Pause button is pressed to unpause the game
+    delay(200); // Debounce delay
+  } else if ((digitalRead(buttonP3) == HIGH) && (!pauseMenu)) { // Pause button is pressed to unpause the game
   	gamePaused = false;
     buttonP3pressed = false; // Ensure that the game isn't paused again in the advanceTime() function
     lcd.clear();
     delay(200); // Debounce delay
+  } else if ((digitalRead(buttonP2) == HIGH) && (!pauseMenu)) {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Who won?");
+    delay(200); // Debounce delay
+    bool checker = true;
+    while (checker) {
+      if (digitalRead(buttonP1) == HIGH) {
+        checker = false;
+        whiteGames++;
+      } else if (digitalRead(buttonP2) == HIGH) {
+        checker = false;
+        blackGames++;
+      }
+    }
+    if (whiteGames != EEPROM.read(5)) EEPROM.write(5, whiteGames);
+    if (blackGames != EEPROM.read(6)) EEPROM.write(6, blackGames);
+    lcd.clear();
+    delay(200);
+    lcd.setCursor(0, 0);
+    lcd.print("Play again?");
+    checker = true;
+    while (checker) {
+      if (digitalRead(buttonP1) == HIGH) {
+        checker = false;
+        player1Minutes = clone1;
+        player1Seconds = clone1s;
+        player2Minutes = clone2;
+        player2Seconds = clone2s;
+        gamePaused = false;
+        gameStarted = true;
+        lcd.clear();
+        displayCurrentTime();
+      } else if (digitalRead(buttonP2) == HIGH) {
+        checker = false;
+        gameRunning = false;
+        player1Minutes = 0;
+        player1Seconds = 0;
+        player2Minutes = 0;
+        player2Seconds = 0;
+        gamePaused = false;
+        gameStarted = true;
+        setupPlayer = 0;
+		    setupNumber = 0;
+        lcd.clear();
+        buttonP1pressed = false;
+      	buttonP2pressed = false;
+      	buttonP3pressed = false;
+        // Print Black's time on display 2
+      	led_display2.clear();
+      	setTime(player2Minutes, false, true);
+      	setTime(player2Seconds, false, false);
+      	led_display2.println(player2Time);
+      	led_display2.drawColon(true);
+      	led_display2.writeDisplay();
+      }
+    }
+    delay(200);
   }
   
   if (pauseMenu) {
@@ -660,16 +726,16 @@ void menuPause() {
 
       delay(500); // Small delay before the game begins
     }
-  if (buttonP2pressed) { // Increment button is pressed
-    if (setupPlayer == 0) { // Player 1 (white)'s time is being set
-      if (setupNumber == 0) { // Minutes are being set
-        player1Minutes++;
-        if (player1Minutes > 120) player1Minutes = 120; // If minutes are over 120, bring it back to 120
-      } else if (setupNumber == 1) { // Seconds are being set
-        player1Seconds++;
-        if (player1Seconds >= 60) player1Seconds = 59; // If seconds are over 59, bring it back to 59
-      }
-    } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
+    if (buttonP2pressed) { // Increment button is pressed
+      if (setupPlayer == 0) { // Player 1 (white)'s time is being set
+        if (setupNumber == 0) { // Minutes are being set
+          player1Minutes++;
+          if (player1Minutes > 120) player1Minutes = 120; // If minutes are over 120, bring it back to 120
+        } else if (setupNumber == 1) { // Seconds are being set
+          player1Seconds++;
+          if (player1Seconds >= 60) player1Seconds = 59; // If seconds are over 59, bring it back to 59
+        }
+      } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
         if (setupNumber == 0) { // Minutes are being set
           player2Minutes++;
           if (player2Minutes > 120) player2Minutes = 120; // If minutes are over 120, bring it back to 120
@@ -700,7 +766,7 @@ void menuPause() {
           if (player2Seconds < 0) player2Seconds = 0; // If seconds are negative, bring it back to 0
         }
       } else if (setupNumber == 2) {
-      	increment--;
+        increment--;
       	if (increment < 0) increment = 0; // If increment is negative, bring it back to 0
       }
     }
