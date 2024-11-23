@@ -221,12 +221,7 @@ void loop() {
       lcd.print("Game Paused");
 
       delay(200); // Debounce delay
-      if (digitalRead(buttonP3) == HIGH) { // Pause button is pressed to unpause the game
-  		gamePaused = false;
-    	buttonP3pressed = false; // Ensure that the game isn't paused again in the advanceTime() function
-    	lcd.clear();
-    	delay(200); // Debounce delay
-  	  }
+      menuPause();
     }
     delay(100); // Debounce delay, serves dual purpose of ensuring that advanceTime() function is only run every 0.01s, allowing
                 // the centiseconds counter to only increment every centisecond and therefore count correctly
@@ -311,8 +306,7 @@ void editTime() {
         else player1Minutes++;
         if (player1Minutes > 120) player1Minutes = 120; // If minutes are over 120, bring it back to 120
       } else if (setupNumber == 1) { // Seconds are being set
-        if (player1Seconds >= 20 && player1Seconds <= 40) player1Seconds += 5;
-        else player1Seconds++;
+        player1Seconds++;
         if (player1Seconds >= 60) player1Seconds = 59; // If seconds are over 59, bring it back to 59
       }
     } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
@@ -324,8 +318,7 @@ void editTime() {
         else player2Minutes++;
         if (player2Minutes > 120) player2Minutes = 120; // If minutes are over 120, bring it back to 120
       } else if (setupNumber == 1) { // Seconds are being set
-        if (player2Seconds >= 20 && player2Seconds <= 40) player2Seconds += 5;
-        else player2Seconds++;
+        player2Seconds++;
         if (player2Seconds >= 60) player2Seconds = 59; // If seconds are over 59, bring it back to 59
       }
     } else if (setupNumber == 2) { // Increment time control is being set
@@ -344,8 +337,7 @@ void editTime() {
         else player1Minutes--;
         if (player1Minutes < 0) player1Minutes = 0; // If minutes are negative, bring it back to 0
       } else if (setupNumber == 1) { // Seconds are being set
-        if (player1Seconds >= 20 && player1Seconds <= 45) player1Seconds -= 5;
-        else player1Seconds--;
+        player1Seconds--;
         if (player1Seconds < 0) player1Seconds = 0; // If seconds are negative, bring it back to 0
       }
     } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
@@ -357,8 +349,7 @@ void editTime() {
         else player2Minutes--;
         if (player2Minutes < 0) player2Minutes = 0; // If minutes are negative, bring it back to 0
       } else if (setupNumber == 1) { // Seconds are being set
-        if (player2Seconds >= 20 && player2Seconds <= 45) player2Seconds -= 5;
-        else player2Seconds--;
+        player2Seconds--;
         if (player2Seconds < 0) player2Seconds = 0; // If seconds are negative, bring it back to 0
       }
     } else if (setupNumber == 2) {
