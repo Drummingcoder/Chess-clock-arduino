@@ -14,9 +14,7 @@ TLDR Features:
 
 Things to add:
 - Add a centisecond display under 20 secs
-- Add a each person has... setting
 - Revamp settings so that only one button has to be pressed (if trying to go fast)
-- Make code more efficient
 - Blinking minutes or seconds when setting up
 - Ending buzzer melody?
 - Better time handling using millis(), using delay() for now
@@ -43,6 +41,9 @@ Added:
   -  On the "Who won?" screen, press Button 1 for White and Button 2 for Black
   -  On the "Play again?" screen, press Button 1 to play again with the same time controls, press Button 2 to set time controls again
      (to change settings like the beep, use the Reset button, game scores will be saved)
+- A each person has x time PER MOVE setting (causal mode)
+  - On the "Competitive or causal?" screen, press Button 1 for competitive mode (each player has x time for the whole game) and Button
+    2 for casual mode (each player has x time PER MOVE)
 
 This chess clock allows you to set separate times for players 1 and 2 (although you can leave the times for player 2 blank if you want to have players 1 and 2 the same). Leaving player 1's time blank will set the time control to be 10 minutes (player 2's time can be set separately or not).
 When starting the chess clock and setting the time controls, use the player 1 button to decrement, the player 2 button to increment, and the Set button to set that time setting. You can also set the increment time (in seconds) 
