@@ -20,6 +20,7 @@ Things to add:
 - Blinking minutes or seconds when setting up
 - Ending buzzer melody?
 - Better time handling using millis(), using delay() for now
+- Add melody to 10 sec warning
 
 Added: 
 - Option to use previous time settings or not when setting up (Player 1 (white) or left button for YES, Player 2 (Black) or right button for NO)
