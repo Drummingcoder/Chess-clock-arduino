@@ -40,6 +40,16 @@ bool gameStarted = true, beepOn = true, beeping = false, pauseMenu = false, casu
 // Button states
 bool buttonP1pressed = false, buttonP2pressed = false, buttonP3pressed = false;
 
+const int G3 = 196, Arl = 220, B3 = 247, C4 = 262, C45 = 278, D4 = 294, E4 = 330, F4 = 349, F45 = 372, G4 = 392, Aru = 440, B4 = 494, C5 = 523, D5 = 566;
+
+int melody[] = {
+  Aru, Aru, Aru, Aru, C5, D5, Aru, G4, G4, F4, F4, E4, F4, D4
+};
+
+float noteDurations[] = {
+  2.4, 4.8, 2.88, 2.88, 2.88, 2.88, 1.9, 2.4, 4.8, 2.88, 2.88, 2.88, 2.88, 2.88
+};
+
 // Runs once after the chess clock starts up, sets up variables and reads from EEPROM
 void setup() {
   // Setup pin modes
@@ -214,10 +224,15 @@ void loop() {
     while (gamePaused) {
       while (whiteWon || blackWon) { // Infinitely makes the buzzer beep until chess clock is reset or turned off
         if (beepOn) {
-          noTone(buzzer);
-       	  delay(500);
-          tone(buzzer, 523);
-          delay(500);
+          for (int thisNote = 0; thisNote < 16; thisNote++) {
+    				int noteDuration = 1000 / noteDurations[thisNote];
+    				tone(buzzer, melody[thisNote], noteDuration);
+    				int pauseBetweenNotes = noteDuration * 1.30;
+    				delay(pauseBetweenNotes);
+    				noTone(buzzer);
+  				}
+  				delay(500);
+  				noTone(buzzer);
         }
       }
 
@@ -472,13 +487,13 @@ void displayCurrentTime() {
   }               
 
   if (((player1Minutes == 1 && player1Seconds == 0) && currentPlayer == 0) || ((player2Minutes == 1 && player2Seconds == 0) && currentPlayer == 1)) {
-    if (beepOn) {
+    if (beepOn && (!gameStarted)) {
       tone(buzzer, 523);
       centiBeepCounter = 0;
       beeping = true;
     }
   } else if (((player1Minutes == 0 && player1Seconds == 10) && currentPlayer == 0) || ((player2Minutes == 0 && player2Seconds == 10) && currentPlayer == 1)) {
-    if (beepOn) {
+    if (beepOn && (!gameStarted)) {
       tone(buzzer, 523);
       centiBeepCounter = 0;
       beeping = true;
