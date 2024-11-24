@@ -35,7 +35,7 @@ int clone1, clone1s, clone2, clone2s;
 char player1Time[5] = "0000", player2Time[5] = "0000"; // Variables to control what is printed to the LED display
 int centiCounter1 = 0, centiCounter2 = 0, centiBeepCounter = 0; // Allows the clock to count in centiseconds for more accurate timing
 int whiteGames = 0, blackGames = 0;
-bool gameStarted = true, beepOn = true, beeping = false, pauseMenu = false;
+bool gameStarted = true, beepOn = true, beeping = false, pauseMenu = false, casual = true;
 
 // Button states
 bool buttonP1pressed = false, buttonP2pressed = false, buttonP3pressed = false;
@@ -69,29 +69,46 @@ void setup() {
 
   get_ans(beepOn);
 
-  // Check to use previous settings or not
+	// Check to use previous settings or not
   delay(200);
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Use previous");
+  lcd.print("Competitive or");
   lcd.setCursor(0, 1);
-  lcd.print("time?");
-  
-  // Check to use previous settings or not
-	bool checker2 = true;
-	get_ans(checker2);
+  lcd.print("casual?");
 
-  if (!checker2) {
-    // Read saved settings from EEPROM
-    if (EEPROM.read(0) != 255) player1Minutes = EEPROM.read(0);
-    if (EEPROM.read(1) != 255) player1Seconds = EEPROM.read(1);
-    if (EEPROM.read(2) != 255) player2Minutes = EEPROM.read(2);
-    if (EEPROM.read(3) != 255) player2Seconds = EEPROM.read(3);
-    if (EEPROM.read(4) != 255) increment = EEPROM.read(4);
-		setupPlayer = 2;
-    setupNumber = 2;
-    buttonP3pressed = true;
-  }
+	get_ans(casual);
+	bool checker2 = true;
+	if (EEPROM.read(7) != casual) {
+		EEPROM.write(7, casual);
+		checker2 = false;
+	}
+
+	if (checker2) {
+	  // Check to use previous settings or not
+	  delay(200);
+	  lcd.clear();
+	  lcd.setCursor(0, 0);
+	  lcd.print("Use previous");
+	  lcd.setCursor(0, 1);
+	  lcd.print("time?");
+	  
+	  // Check to use previous settings or not
+	  
+	  get_ans(checker2);
+		
+		if (!checker2) {
+	    // Read saved settings from EEPROM
+	    if (EEPROM.read(0) != 255) player1Minutes = EEPROM.read(0);
+	    if (EEPROM.read(1) != 255) player1Seconds = EEPROM.read(1);
+	    if (EEPROM.read(2) != 255) player2Minutes = EEPROM.read(2);
+	    if (EEPROM.read(3) != 255) player2Seconds = EEPROM.read(3);
+	    if (EEPROM.read(4) != 255) increment = EEPROM.read(4);
+			setupPlayer = 2;
+	    setupNumber = 2;
+	    buttonP3pressed = true;
+	  }
+	}
   
   delay(200);
   lcd.clear();
@@ -115,7 +132,7 @@ void setup() {
 
 void loop() {
   if (gameRunning) {
-    //Start the game only when player 1 presses the button
+    // Start the game only when player 1 presses the button
     while (gameStarted) {
       if (digitalRead(buttonP1) == HIGH) {
         gameStarted = false;
@@ -126,11 +143,16 @@ void loop() {
     
     // Handle button presses for switching players
     if (digitalRead(buttonP1) == HIGH && currentPlayer != 1) { // Player 1 button is pressed and the current player is player 1
-      player1Seconds += increment;
-      while (player1Seconds >= 60) { // In case the increment increases the # of seconds to be greater than 59
-        player1Minutes++;
-        player1Seconds -= 60;
-      }
+			if (casual) {
+				player1Minutes = clone1;
+				player1Seconds = clone1s;
+			} else {
+	      player1Seconds += increment;
+	      while (player1Seconds >= 60) { // In case the increment increases the # of seconds to be greater than 59
+	        player1Minutes++;
+	        player1Seconds -= 60;
+	      }
+			}
       currentPlayer = 1; // Change current player to black (player 2)
       led_display1.drawColon(true);
       led_display1.writeDisplay();
@@ -142,11 +164,16 @@ void loop() {
         centiBeepCounter = 0;
       }
     } else if (digitalRead(buttonP2) == HIGH && currentPlayer != 0) { // Player 2 button is pressed and the current player is player 2
-      player2Seconds += increment;
-      while (player2Seconds >= 60) {
-        player2Minutes++;
-        player2Seconds -= 60;
-      }
+			if (casual) {
+				player2Minutes = clone2;
+				player2Seconds = clone2s;
+			} else {
+	      player2Seconds += increment;
+	      while (player2Seconds >= 60) {
+	        player2Minutes++;
+	        player2Seconds -= 60;
+	      }
+			}
       currentPlayer = 0; // Change current player to white (player 1)
       led_display2.drawColon(true);
       led_display2.writeDisplay();
@@ -227,31 +254,23 @@ void editTime(bool notPaused) {
       setupNumber = 0;
       setupPlayer++;
     } else if (setupPlayer == 1) { // If player 2's time is done being set, move on to the increment time control
-      setupPlayer++;
-      setupNumber = 2; // To ensure that the first if block (of this if-else tree) isn't triggered and pass a check later on
-      lcd.clear();
+			if (casual && notPaused) {
+				startingGame();
+				lcd.clear();
+	      displayCurrentTime();
+			} else if (casual && (!notPaused)) {
+				lcd.clear();
+        pauseMenu = false;
+        displayCurrentTime();
+        lcd.clear();
+			} else {
+	      setupPlayer++;
+	      setupNumber = 2; // To ensure that the first if block (of this if-else tree) isn't triggered and pass a check later on
+	      lcd.clear();
+			}
     } else { // Increment time control is done being set, start the game
 			if (notPaused) {
-	      gameRunning = true;
-	      
-	      if (player1Minutes == 0 && player1Seconds == 0) { // Sets player 1's time to 10 minutes if it's left blank
-	        player1Minutes = 10;
-	      }
-	      if (player2Minutes == 0 && player2Seconds == 0) { // Sets player 2's time to player 1's if it's left blank
-	        player2Minutes = player1Minutes;
-	        player2Seconds = player1Seconds;
-	      }
-	
-	      clone1 = player1Minutes;
-	      clone1s = player1Seconds;
-	      clone2 = player2Minutes;
-	      clone2s = player2Seconds;
-	      
-	      // Write variables to memory only if they have changed
-	      if (player1Minutes != EEPROM.read(0)) EEPROM.write(0, player1Minutes);
-	      if (player1Seconds != EEPROM.read(1)) EEPROM.write(1, player1Seconds);
-	      if (player2Minutes != EEPROM.read(2)) EEPROM.write(2, player2Minutes);
-	      if (player2Seconds != EEPROM.read(3)) EEPROM.write(3, player2Seconds);
+	      startingGame();
 	      if (increment != EEPROM.read(4)) EEPROM.write(4, increment);
 	      
 	      lcd.clear();
@@ -476,47 +495,52 @@ void displayCurrentTime() {
   lcd.print("- ");
   lcd.print(blackGames);
   
-  // Calculate time difference
-  lcd.setCursor(5, 1);
-  int diffMinutes, diffSeconds, firstMinutes, firstSeconds, secondMinutes, secondSeconds;
-  if (currentPlayer == 0) { // White's turn
-    firstMinutes = player1Minutes;
-    firstSeconds = player1Seconds;
-    secondMinutes = player2Minutes;
-    secondSeconds = player2Seconds;
+  if (!casual) {
+    // Calculate time difference
+    lcd.setCursor(5, 1);
+    int diffMinutes, diffSeconds, firstMinutes, firstSeconds, secondMinutes, secondSeconds;
+    if (currentPlayer == 0) { // White's turn
+      firstMinutes = player1Minutes;
+      firstSeconds = player1Seconds;
+      secondMinutes = player2Minutes;
+      secondSeconds = player2Seconds;
+    } else {
+      firstMinutes = player2Minutes;
+      firstSeconds = player2Seconds;
+      secondMinutes = player1Minutes;
+      secondSeconds = player1Seconds;
+    }
+
+    diffMinutes = firstMinutes - secondMinutes;
+    diffSeconds = firstSeconds - secondSeconds;
+
+    if (diffSeconds < 0 && diffMinutes > 0) {
+      diffMinutes--;
+      diffSeconds += 60;
+    } else if (diffSeconds > 0 && diffMinutes < 0) {
+      diffMinutes++;
+      diffSeconds -= 60;
+    }
+
+
+    if ((diffMinutes > 0) || (diffMinutes == 0 && diffSeconds >= 0)) {
+      lcd.print("+");
+    } else if ((diffMinutes < 0) || (diffMinutes == 0 && diffSeconds < 0)) {
+      lcd.print("-");
+    }
+
+    if (diffMinutes < 0) diffMinutes *= -1;
+    if (diffSeconds < 0) diffSeconds *= -1;
+
+    if (diffMinutes < 10) lcd.print("0");
+    lcd.print(diffMinutes);
+    lcd.print(":");
+    if (diffSeconds < 10) lcd.print("0");
+    lcd.print(diffSeconds);
   } else {
-    firstMinutes = player2Minutes;
-    firstSeconds = player2Seconds;
-    secondMinutes = player1Minutes;
-    secondSeconds = player1Seconds;
+    lcd.setCursor(5, 1);
+    lcd.print("Casual");
   }
-  
-  diffMinutes = firstMinutes - secondMinutes;
-  diffSeconds = firstSeconds - secondSeconds;
-
-  if (diffSeconds < 0 && diffMinutes > 0) {
-    diffMinutes--;
-    diffSeconds += 60;
-  } else if (diffSeconds > 0 && diffMinutes < 0) {
-    diffMinutes++;
-    diffSeconds -= 60;
-  }
-    
-
-  if ((diffMinutes > 0) || (diffMinutes == 0 && diffSeconds >= 0)) {
-    lcd.print("+");
-  } else if ((diffMinutes < 0) || (diffMinutes == 0 && diffSeconds < 0)) {
-    lcd.print("-");
-  }
-
-  if (diffMinutes < 0) diffMinutes *= -1;
-  if (diffSeconds < 0) diffSeconds *= -1;
-    
-  if (diffMinutes < 10) lcd.print("0");
-  lcd.print(diffMinutes);
-  lcd.print(":");
-  if (diffSeconds < 10) lcd.print("0");
-  lcd.print(diffSeconds);
 
   // Player 1 (White) time display
   led_display1.clear();
@@ -620,6 +644,7 @@ void menuPause() {
     lcd.clear();
     delay(200); // Debounce delay
   } else if ((digitalRead(buttonP2) == HIGH) && (!pauseMenu)) {
+		delay(200); // Debounce delay
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("Who won?");
@@ -636,7 +661,7 @@ void menuPause() {
     lcd.setCursor(0, 0);
     lcd.print("Play again?");
     checker3 = true;
-		blackGames++;
+		get_ans(checker3);
 		if (!checker3) {
 			player1Minutes = clone1;
       player1Seconds = clone1s;
@@ -710,4 +735,27 @@ void checkButtons() {
     buttonP2pressed = false;
     buttonP3pressed = false;
   }
+}
+
+void startingGame() {
+	gameRunning = true;
+	      
+	if (player1Minutes == 0 && player1Seconds == 0) { // Sets player 1's time to 10 minutes if it's left blank
+	  player1Minutes = 10;
+	}
+	if (player2Minutes == 0 && player2Seconds == 0) { // Sets player 2's time to player 1's if it's left blank
+	  player2Minutes = player1Minutes;
+	  player2Seconds = player1Seconds;
+	}
+	
+	clone1 = player1Minutes;
+	clone1s = player1Seconds;
+	clone2 = player2Minutes;
+	clone2s = player2Seconds;
+		      
+	// Write variables to memory only if they have changed
+	if (player1Minutes != EEPROM.read(0)) EEPROM.write(0, player1Minutes);
+	if (player1Seconds != EEPROM.read(1)) EEPROM.write(1, player1Seconds);
+	if (player2Minutes != EEPROM.read(2)) EEPROM.write(2, player2Minutes);
+	if (player2Seconds != EEPROM.read(3)) EEPROM.write(3, player2Seconds);
 }
