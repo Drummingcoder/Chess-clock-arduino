@@ -67,15 +67,7 @@ void setup() {
   lcd.setCursor(0, 0);
   lcd.print("Turn beep off?");
 
-  bool checker = true;
-  while (checker) {
-    if (digitalRead(buttonP1) == HIGH) {
-      checker = false;
-      beepOn = false;
-    } else if (digitalRead(buttonP2) == HIGH) {
-      checker = false;
-    }
-  }
+  get_ans(beepOn);
 
   // Check to use previous settings or not
   delay(200);
@@ -86,26 +78,19 @@ void setup() {
   lcd.print("time?");
   
   // Check to use previous settings or not
-  bool checker1 = true, checker2 = false;
-  while (checker1) {
-    if (digitalRead(buttonP1) == HIGH) {
-      checker1 = false;
-      checker2 = true;
-      setupPlayer = 2;
-      setupNumber = 2;
-      buttonP3pressed = true;
-    } else if (digitalRead(buttonP2) == HIGH) {
-      checker1 = false;
-    }
-  }
+	bool checker2 = true;
+	get_ans(checker2);
 
-  if (checker2) {
+  if (!checker2) {
     // Read saved settings from EEPROM
     if (EEPROM.read(0) != 255) player1Minutes = EEPROM.read(0);
     if (EEPROM.read(1) != 255) player1Seconds = EEPROM.read(1);
     if (EEPROM.read(2) != 255) player2Minutes = EEPROM.read(2);
     if (EEPROM.read(3) != 255) player2Seconds = EEPROM.read(3);
     if (EEPROM.read(4) != 255) increment = EEPROM.read(4);
+		setupPlayer = 2;
+    setupNumber = 2;
+    buttonP3pressed = true;
   }
   
   delay(200);
@@ -115,17 +100,10 @@ void setup() {
   lcd.setCursor(0, 1);
   lcd.print("score?");
   
-  checker1 = true, checker2 = false;
-  while (checker1) {
-    if (digitalRead(buttonP1) == HIGH) {
-      checker1 = false;
-      checker2 = true;
-    } else if (digitalRead(buttonP2) == HIGH) {
-      checker1 = false;
-    }
-  }
+  checker2 = true;
+  get_ans(checker2);
 
-  if (checker2) {
+  if (!checker2) {
     if (EEPROM.read(5) != 255) whiteGames = EEPROM.read(5);
     if (EEPROM.read(6) != 255) blackGames = EEPROM.read(6);
   }
@@ -228,28 +206,12 @@ void loop() {
     updateScreen();
     
     // Calls editTime() to change the values of the time control variables or advance the setting stage
-    editTime();
+    editTime(true);
 
     // Checks each button to see if it's pressed, and sets the button variables to the appropriate values
     // Also, thanks to this if-else statement, when multiple buttons are pressed, player 1 button has 1st priority, and
     // player 2 button has 2nd priority
-    if (digitalRead(buttonP1) == HIGH) { // Decrement button is pressed
-      buttonP1pressed = true;
-      buttonP2pressed = false;
-      buttonP3pressed = false;
-    } else if (digitalRead(buttonP2) == HIGH) { // Increment button is pressed
-      buttonP1pressed = false;
-      buttonP2pressed = true;
-      buttonP3pressed = false;
-    } else if (digitalRead(buttonP3) == HIGH) { // SET button is pressed
-      buttonP1pressed = false;
-      buttonP2pressed = false;
-      buttonP3pressed = true;
-    } else { // No buttons are pressed
-      buttonP1pressed = false;
-      buttonP2pressed = false;
-      buttonP3pressed = false;
-    }
+    checkButtons();
     
     delay(200); // Debounce delay
   }
@@ -257,7 +219,7 @@ void loop() {
 
 // This function is in charge of checking the state of each button variable and changing the appropriate variable (or advancing the
 // setting stage).
-void editTime() {
+void editTime(bool notPaused) {
   if (buttonP3pressed) { // SET button is pressed
     if (setupNumber < 1) { // Minutes (of either player) were being set, move on to seconds
       setupNumber++;
@@ -269,30 +231,37 @@ void editTime() {
       setupNumber = 2; // To ensure that the first if block (of this if-else tree) isn't triggered and pass a check later on
       lcd.clear();
     } else { // Increment time control is done being set, start the game
-      gameRunning = true;
-      
-      if (player1Minutes == 0 && player1Seconds == 0) { // Sets player 1's time to 10 minutes if it's left blank
-        player1Minutes = 10;
-      }
-      if (player2Minutes == 0 && player2Seconds == 0) { // Sets player 2's time to player 1's if it's left blank
-        player2Minutes = player1Minutes;
-        player2Seconds = player1Seconds;
-      }
-
-      clone1 = player1Minutes;
-      clone1s = player1Seconds;
-      clone2 = player2Minutes;
-      clone2s = player2Seconds;
-      
-      // Write variables to memory only if they have changed
-      if (player1Minutes != EEPROM.read(0)) EEPROM.write(0, player1Minutes);
-      if (player1Seconds != EEPROM.read(1)) EEPROM.write(1, player1Seconds);
-      if (player2Minutes != EEPROM.read(2)) EEPROM.write(2, player2Minutes);
-      if (player2Seconds != EEPROM.read(3)) EEPROM.write(3, player2Seconds);
-      if (increment != EEPROM.read(4)) EEPROM.write(4, increment);
-      
-      lcd.clear();
-      displayCurrentTime();
+			if (notPaused) {
+	      gameRunning = true;
+	      
+	      if (player1Minutes == 0 && player1Seconds == 0) { // Sets player 1's time to 10 minutes if it's left blank
+	        player1Minutes = 10;
+	      }
+	      if (player2Minutes == 0 && player2Seconds == 0) { // Sets player 2's time to player 1's if it's left blank
+	        player2Minutes = player1Minutes;
+	        player2Seconds = player1Seconds;
+	      }
+	
+	      clone1 = player1Minutes;
+	      clone1s = player1Seconds;
+	      clone2 = player2Minutes;
+	      clone2s = player2Seconds;
+	      
+	      // Write variables to memory only if they have changed
+	      if (player1Minutes != EEPROM.read(0)) EEPROM.write(0, player1Minutes);
+	      if (player1Seconds != EEPROM.read(1)) EEPROM.write(1, player1Seconds);
+	      if (player2Minutes != EEPROM.read(2)) EEPROM.write(2, player2Minutes);
+	      if (player2Seconds != EEPROM.read(3)) EEPROM.write(3, player2Seconds);
+	      if (increment != EEPROM.read(4)) EEPROM.write(4, increment);
+	      
+	      lcd.clear();
+	      displayCurrentTime();
+			} else {
+				lcd.clear();
+        pauseMenu = false;
+        displayCurrentTime();
+        lcd.clear();
+			}
     }
 
     delay(500); // Small delay before the game begins
@@ -300,11 +269,15 @@ void editTime() {
   if (buttonP2pressed) { // Increment button is pressed
     if (setupPlayer == 0) { // Player 1 (white)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
-        if (player1Minutes >= 15 && player1Minutes <= 25) player1Minutes += 5;
-        else if (player1Minutes == 30) player1Minutes += 10;
-        else if (player1Minutes >= 40 && player1Minutes < 50) player1Minutes += 5;
-        else if (player1Minutes >= 50) player1Minutes += 10;
-        else player1Minutes++;
+				if (notPaused) {
+	        if (player1Minutes >= 15 && player1Minutes <= 25) player1Minutes += 5;
+	        else if (player1Minutes == 30) player1Minutes += 10;
+	        else if (player1Minutes >= 40 && player1Minutes < 50) player1Minutes += 5;
+	        else if (player1Minutes >= 50) player1Minutes += 10;
+	        else player1Minutes++;
+				} else {
+					player1Minutes++;
+				}
         if (player1Minutes > 120) player1Minutes = 120; // If minutes are over 120, bring it back to 120
       } else if (setupNumber == 1) { // Seconds are being set
         player1Seconds++;
@@ -312,30 +285,42 @@ void editTime() {
       }
     } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
-        if (player2Minutes >= 15 && player2Minutes <= 25) player2Minutes += 5;
-        else if (player2Minutes == 30) player2Minutes += 10;
-        else if (player2Minutes >= 40 && player2Minutes < 50) player2Minutes += 5;
-        else if (player2Minutes >= 50) player2Minutes += 10;
-        else player2Minutes++;
+				if (notPaused) {
+	        if (player2Minutes >= 15 && player2Minutes <= 25) player2Minutes += 5;
+	        else if (player2Minutes == 30) player2Minutes += 10;
+	        else if (player2Minutes >= 40 && player2Minutes < 50) player2Minutes += 5;
+	        else if (player2Minutes >= 50) player2Minutes += 10;
+	        else player2Minutes++;
+				} else {
+					player2Minutes++;
+				}
         if (player2Minutes > 120) player2Minutes = 120; // If minutes are over 120, bring it back to 120
       } else if (setupNumber == 1) { // Seconds are being set
         player2Seconds++;
         if (player2Seconds >= 60) player2Seconds = 59; // If seconds are over 59, bring it back to 59
       }
     } else if (setupNumber == 2) { // Increment time control is being set
-      if (increment >= 15) increment += 5;
-      else increment++;
+			if (notPaused) {
+	      if (increment >= 15) increment += 5;
+	      else increment++;
+			} else {
+				increment++;
+			}
       if (increment > 60) increment = 60; // If increment is over 60, bring it back to 60
     }
   }
   if (buttonP1pressed) { // Decrement button was pressed
     if (setupPlayer == 0) { // Player 1 (white)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
-        if (player1Minutes >= 20 && player1Minutes <= 30) player1Minutes -= 5;
-        else if (player1Minutes == 40) player1Minutes -= 10;
-        else if (player1Minutes == 45 || player1Minutes == 50) player1Minutes -= 5;
-        else if (player1Minutes >= 60) player1Minutes -= 10;
-        else player1Minutes--;
+				if (notPaused) {
+	        if (player1Minutes >= 20 && player1Minutes <= 30) player1Minutes -= 5;
+	        else if (player1Minutes == 40) player1Minutes -= 10;
+	        else if (player1Minutes == 45 || player1Minutes == 50) player1Minutes -= 5;
+	        else if (player1Minutes >= 60) player1Minutes -= 10;
+	        else player1Minutes--;
+				} else {
+					player1Minutes--;
+				}
         if (player1Minutes < 0) player1Minutes = 0; // If minutes are negative, bring it back to 0
       } else if (setupNumber == 1) { // Seconds are being set
         player1Seconds--;
@@ -343,19 +328,27 @@ void editTime() {
       }
     } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
       if (setupNumber == 0) { // Minutes are being set
-        if (player2Minutes >= 20 && player2Minutes <= 30) player2Minutes -= 5;
-        else if (player2Minutes == 40) player2Minutes -= 10;
-        else if (player2Minutes == 45 || player2Minutes == 50) player2Minutes -= 5;
-        else if (player2Minutes >= 60) player2Minutes -= 10;
-        else player2Minutes--;
+				if (notPaused) {
+	        if (player2Minutes >= 20 && player2Minutes <= 30) player2Minutes -= 5;
+	        else if (player2Minutes == 40) player2Minutes -= 10;
+	        else if (player2Minutes == 45 || player2Minutes == 50) player2Minutes -= 5;
+	        else if (player2Minutes >= 60) player2Minutes -= 10;
+	        else player2Minutes--;
+				} else {
+					player2Minutes--;
+				}
         if (player2Minutes < 0) player2Minutes = 0; // If minutes are negative, bring it back to 0
       } else if (setupNumber == 1) { // Seconds are being set
         player2Seconds--;
         if (player2Seconds < 0) player2Seconds = 0; // If seconds are negative, bring it back to 0
       }
     } else if (setupNumber == 2) {
-      if (increment >= 20) increment -= 5;
-      else increment--;
+			if (notPaused) {
+	      if (increment >= 20) increment -= 5;
+	      else increment--;
+			} else {
+				increment--;
+			}
       if (increment < 0) increment = 0; // If increment is negative, bring it back to 0
     }
   }
@@ -631,144 +624,90 @@ void menuPause() {
     lcd.setCursor(0, 0);
     lcd.print("Who won?");
     delay(200); // Debounce delay
-    bool checker = true;
-    while (checker) {
-      if (digitalRead(buttonP1) == HIGH) {
-        checker = false;
-        whiteGames++;
-      } else if (digitalRead(buttonP2) == HIGH) {
-        checker = false;
-        blackGames++;
-      }
-    }
+    bool checker3 = true;
+		get_ans(checker3);
+		if (!checker3) whiteGames++;
+		else blackGames++;
     if (whiteGames != EEPROM.read(5)) EEPROM.write(5, whiteGames);
     if (blackGames != EEPROM.read(6)) EEPROM.write(6, blackGames);
+		
     lcd.clear();
     delay(200);
     lcd.setCursor(0, 0);
     lcd.print("Play again?");
-    checker = true;
-    while (checker) {
-      if (digitalRead(buttonP1) == HIGH) {
-        checker = false;
-        player1Minutes = clone1;
-        player1Seconds = clone1s;
-        player2Minutes = clone2;
-        player2Seconds = clone2s;
-        gamePaused = false;
-        gameStarted = true;
-        lcd.clear();
-        displayCurrentTime();
-      } else if (digitalRead(buttonP2) == HIGH) {
-        checker = false;
-        gameRunning = false;
-        player1Minutes = 0;
-        player1Seconds = 0;
-        player2Minutes = 0;
-        player2Seconds = 0;
-        gamePaused = false;
-        gameStarted = true;
-        setupPlayer = 0;
-		    setupNumber = 0;
-        lcd.clear();
-        buttonP1pressed = false;
-      	buttonP2pressed = false;
-      	buttonP3pressed = false;
-        // Print Black's time on display 2
-      	led_display2.clear();
-      	setTime(player2Minutes, false, true);
-      	setTime(player2Seconds, false, false);
-      	led_display2.println(player2Time);
-      	led_display2.drawColon(true);
-      	led_display2.writeDisplay();
-      }
-    }
+    checker3 = true;
+		blackGames++;
+		if (!checker3) {
+			player1Minutes = clone1;
+      player1Seconds = clone1s;
+      player2Minutes = clone2;
+      player2Seconds = clone2s;
+      gamePaused = false;
+      gameStarted = true;
+      lcd.clear();
+      displayCurrentTime();
+		} else {
+			gameRunning = false;
+      player1Minutes = 0;
+      player1Seconds = 0;
+      player2Minutes = 0;
+      player2Seconds = 0;
+      gamePaused = false;
+      gameStarted = true;
+      setupPlayer = 0;
+		  setupNumber = 0;
+      lcd.clear();
+      buttonP1pressed = false;
+      buttonP2pressed = false;
+    	buttonP3pressed = false;
+  		// Clear Player 2 Screen
+      led_display2.clear();	
+      led_display2.println("0000");
+      led_display2.drawColon(true);
+    	led_display2.writeDisplay();
+		}
+  
     delay(200);
   }
   
   if (pauseMenu) {
-    if (digitalRead(buttonP1) == HIGH) { // Decrement button is pressed
-      buttonP1pressed = true;
-      buttonP2pressed = false;
-      buttonP3pressed = false;
-    } else if (digitalRead(buttonP2) == HIGH) { // Increment button is pressed
-      buttonP1pressed = false;
-      buttonP2pressed = true;
-      buttonP3pressed = false;
-    } else if (digitalRead(buttonP3) == HIGH) { // SET button is pressed
-      buttonP1pressed = false;
-      buttonP2pressed = false;
-      buttonP3pressed = true;
-    } else { // No buttons are pressed
-      buttonP1pressed = false;
-      buttonP2pressed = false;
-      buttonP3pressed = false;
-    }
-
+		checkButtons();
+		
     updateScreen();
     
-    if (buttonP3pressed) { // SET button is pressed
-      if (setupNumber < 1) { // Minutes (of either player) were being set, move on to seconds
-        setupNumber++;
-      } else if (setupPlayer < 1) { // If execution moved here, seconds are done being set. If player 1's time was the one being set, move on to player 2.
-        setupNumber = 0;
-        setupPlayer++;
-      } else if (setupPlayer == 1) { // If player 2's time is done being set, move on to the increment time control
-        setupPlayer++;
-        setupNumber = 2; // To ensure that the first if block (of this if-else tree) isn't triggered and pass a check later on
-        lcd.clear();
-      } else { // Increment time control is done being set
-        lcd.clear();
-        pauseMenu = false;
-        displayCurrentTime();
-        lcd.clear();
-      }
+    editTime(false);
+  }
+}
 
-      delay(500); // Small delay before the game begins
+// Repeated functions
+void get_ans(bool& var) {
+  bool checker = true;
+  while (checker) {
+    if (digitalRead(buttonP1) == HIGH) {
+      checker = false;
+      var = false;
+    } else if (digitalRead(buttonP2) == HIGH) {
+      checker = false;
     }
-    if (buttonP2pressed) { // Increment button is pressed
-      if (setupPlayer == 0) { // Player 1 (white)'s time is being set
-        if (setupNumber == 0) { // Minutes are being set
-          player1Minutes++;
-          if (player1Minutes > 120) player1Minutes = 120; // If minutes are over 120, bring it back to 120
-        } else if (setupNumber == 1) { // Seconds are being set
-          player1Seconds++;
-          if (player1Seconds >= 60) player1Seconds = 59; // If seconds are over 59, bring it back to 59
-        }
-      } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
-        if (setupNumber == 0) { // Minutes are being set
-          player2Minutes++;
-          if (player2Minutes > 120) player2Minutes = 120; // If minutes are over 120, bring it back to 120
-        } else if (setupNumber == 1) { // Seconds are being set
-          player2Seconds++;
-          if (player2Seconds >= 60) player2Seconds = 59; // If seconds are over 59, bring it back to 59
-        }
-      } else if (setupNumber == 2) { // Increment time control is being set
-        increment++;
-        if (increment > 60) increment = 60; // If increment is over 60, bring it back to 60
-      }
-    }
-    if (buttonP1pressed) { // Decrement button was pressed
-      if (setupPlayer == 0) { // Player 1 (white)'s time is being set
-        if (setupNumber == 0) { // Minutes are being set
-          player1Minutes--;
-          if (player1Minutes < 0) player1Minutes = 0; // If minutes are negative, bring it back to 0
-        } else if (setupNumber == 1) { // Seconds are being set
-          player1Seconds--;
-          if (player1Seconds < 0) player1Seconds = 0; // If seconds are negative, bring it back to 0
-        }
-      } else if (setupPlayer == 1) { // Player 2 (Black)'s time is being set
-        if (setupNumber == 0) { // Minutes are being set
-          player2Minutes--;
-          if (player2Minutes < 0) player2Minutes = 0; // If minutes are negative, bring it back to 0
-        } else if (setupNumber == 1) { // Seconds are being set
-          player2Seconds--;
-          if (player2Seconds < 0) player2Seconds = 0; // If seconds are negative, bring it back to 0
-        }
-      } else if (setupNumber == 2) {
-        increment--;
-      	if (increment < 0) increment = 0; // If increment is negative, bring it back to 0
-      }
-    }
+  }
+}
+
+void checkButtons() {
+	if (digitalRead(buttonP1) == HIGH) { // Decrement button is pressed
+    buttonP1pressed = true;
+    buttonP2pressed = false;
+    buttonP3pressed = false;
+  } else if (digitalRead(buttonP2) == HIGH) { // Increment button is pressed
+    buttonP1pressed = false;
+    buttonP2pressed = true;
+    buttonP3pressed = false;
+  } else if (digitalRead(buttonP3) == HIGH) { // SET button is pressed
+    buttonP1pressed = false;
+    buttonP2pressed = false;
+    buttonP3pressed = true;
+  } else { // No buttons are pressed
+    buttonP1pressed = false;
+    buttonP2pressed = false;
+    buttonP3pressed = false;
   }
 }
