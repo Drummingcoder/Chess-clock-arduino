@@ -12,14 +12,13 @@ TLDR Features:
 - Can store previous time setting
 - The difference between v1.0 and v2.0 is that v2.0 has two additional displays to show Player 1 and 2 times separately
 
-Things to add:
-- Add a centisecond display under 20 secs
-
 To add in version 2.0:
 - Blinking minutes or seconds when setting up
 - Revamp settings so that only one button has to be pressed (if trying to go fast)
 - Better time handling using millis(), using delay() for now
+  - Add a centisecond display (extra digit to decisecond display) after this improvement
 - Add melody to 10 sec warning
+- Set time and date clock and display time and date when chess clock not in use or only time in corner when chess clock being used
 
 Added: 
 - Option to use previous time settings or not when setting up (Player 1 (white) or left button for YES, Player 2 (Black) or right button for NO)
@@ -46,6 +45,7 @@ Added:
   - On the "Competitive or causal?" screen, press Button 1 for competitive mode (each player has x time for the whole game) and Button
     2 for casual mode (each player has x time PER MOVE)
 - Ending buzzer melody (Blaze of Glory by Bon Jovi, riff only)
+- Decisecond display under 20 secs
 
 This chess clock allows you to set separate times for players 1 and 2 (although you can leave the times for player 2 blank if you want to have players 1 and 2 the same). Leaving player 1's time blank will set the time control to be 10 minutes (player 2's time can be set separately or not).
 When starting the chess clock and setting the time controls, use the player 1 button to decrement, the player 2 button to increment, and the Set button to set that time setting. You can also set the increment time (in seconds) 
