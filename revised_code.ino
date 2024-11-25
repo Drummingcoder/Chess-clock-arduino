@@ -557,6 +557,25 @@ void displayCurrentTime() {
     lcd.print("Casual");
   }
 
+	if (player1Minutes == 0 && player1Seconds <= 20) {
+	  lcd.setCursor(0, 1);
+    lcd.print(".");
+    lcd.print(10-centiCounter1);
+    lcd.setCursor(2, 1);
+    lcd.print(" ");
+  } else {
+    lcd.setCursor(0, 1);
+    lcd.print("   ");
+  }
+	if (player2Minutes == 0 && player2Seconds <= 20) {
+	  lcd.setCursor(14, 1);
+    lcd.print(".");
+    lcd.print(10-centiCounter2);
+  } else {
+    lcd.setCursor(14, 1);
+    lcd.print("  ");
+  }
+
   // Player 1 (White) time display
   led_display1.clear();
   led_display2.clear();
@@ -572,14 +591,14 @@ void displayCurrentTime() {
   } else {
     led_display2.drawColon(true);
   }
-  setTime(player1Minutes, true, true);
+	setTime(player1Minutes, true, true);
   setTime(player1Seconds, true, false);
   led_display1.println(player1Time);
   led_display1.writeDisplay();
   
   // Player 2 (Black) time display
-  setTime(player2Minutes, false, true);
-  setTime(player2Seconds, false, false);
+	setTime(player2Minutes, false, true);
+	setTime(player2Seconds, false, false);
   led_display2.println(player2Time);
   led_display2.writeDisplay();
 }
