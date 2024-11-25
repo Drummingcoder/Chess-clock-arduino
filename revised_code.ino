@@ -173,6 +173,7 @@ void loop() {
       currentPlayer = 1; // Change current player to black (player 2)
       led_display1.drawColon(true);
       led_display1.writeDisplay();
+			// Beep to switch players
       if (beepOn) {
         tone(buzzer, 523);
         delay(100);
@@ -227,10 +228,11 @@ void loop() {
     }
 
     // Checks if the game is paused or over, and keeps execution in this loop until the Pause button is pressed again if game is paused,
-    // otherwise just pauses execution infinitely (which means that the game is over)
+    // or game is ended, otherwise just pauses execution infinitely (which means that the game is over)
     while (gamePaused) {
       while (whiteWon || blackWon) { // Infinitely makes the buzzer beep until chess clock is reset or turned off
         if (beepOn) {
+					// Melody
           for (int thisNote = 0; thisNote < 16; thisNote++) {
     				int noteDuration = 1000 / noteDurations[thisNote];
     				tone(buzzer, melody[thisNote], noteDuration);
@@ -258,8 +260,6 @@ void loop() {
     editTime(true);
 
     // Checks each button to see if it's pressed, and sets the button variables to the appropriate values
-    // Also, thanks to this if-else statement, when multiple buttons are pressed, player 1 button has 1st priority, and
-    // player 2 button has 2nd priority
     checkButtons();
     
     delay(200); // Debounce delay
@@ -486,13 +486,13 @@ void advanceTime() {
 
 // This function is responsible for updating the screen while the game is running, called by advanceTime()
 void displayCurrentTime() {
+	// Control the beep warnings
   if (beeping && centiBeepCounter != 10) {
     centiBeepCounter++;
   } else if (beeping && centiBeepCounter == 10) {
     noTone(buzzer);
     beeping = false;
   }               
-
   if (((player1Minutes == 1 && player1Seconds == 0) && currentPlayer == 0) || ((player2Minutes == 1 && player2Seconds == 0) && currentPlayer == 1)) {
     if (beepOn && (!gameStarted)) {
       tone(buzzer, 523);
@@ -516,7 +516,8 @@ void displayCurrentTime() {
   lcd.print(whiteGames);
   lcd.print("- ");
   lcd.print(blackGames);
-  
+
+	// Display time difference if competitive mode
   if (!casual) {
     // Calculate time difference
     lcd.setCursor(5, 1);
@@ -759,6 +760,8 @@ void get_ans(bool& var) {
 }
 
 void checkButtons() {
+	// Also, thanks to this if-else statement, when multiple buttons are pressed, player 1 button has 1st priority, and
+  // player 2 button has 2nd priority
 	if (digitalRead(buttonP1) == HIGH) { // Decrement button is pressed
     buttonP1pressed = true;
     buttonP2pressed = false;
