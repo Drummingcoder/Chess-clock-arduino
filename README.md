@@ -12,15 +12,6 @@ TLDR Features:
 - Can store previous time setting
 - The difference between v1.0 and v2.0 is that v2.0 has two additional displays to show Player 1 and 2 times separately
 
-Things to add:
-- Ability to reset the chess clock after timing out (and also the option to play again with the same settings).
-- A beep every time a turn is made?
-- Ability to add or subtract time during a game while in the Pause menu
-- Add a centisecond display (v1.0 only)
-- Start the timer (when the game starts) only when player 1 presses their button
-- Option to use previous time settings or not when setting up
-- Hexadecimal minutes up to 12, for 120 minutes (v2.0 only)
-
 This chess clock allows you to set separate times for players 1 and 2 (although you can leave the times for player 2 blank if you want to have players 1 and 2 the same). 
 When starting the chess clock and setting the time controls, use the player 1 button to decrement, the player 2 button to increment, and the Set button to set that time setting. You can also set the increment time (in seconds) 
 after setting player 1 and player 2's time. When the game is running, the Player 1 and Player 2 buttons will swap turns from black to white and vice versa, and the Set
