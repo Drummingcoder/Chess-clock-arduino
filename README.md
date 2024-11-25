@@ -22,6 +22,7 @@ To be added in version 2.0:
 - Set time and date clock and display time and date when chess clock not in use or only time in corner when chess clock being used
 
 *Added (difference between v1.0 and v1.1):*
+
 While starting up and setting time:
 - Welcome Screen
 - Game score counter, stored in EEPROM storage
