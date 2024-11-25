@@ -1,10 +1,14 @@
 // List of functions: 
 // setup(); and loop(); are the main functions, setup() runs once at the beginning to initialize pins, while loop() loops over and over after setup() runs
-// editTime(); works during setup, and is in charge of changing time controls or advancing settings based on button pressed
+// editTime(bool notPaused); is in charge of changing time controls or advancing settings based on button pressed, works during setup or pause menu
 // updateScreen(); works during setup, in charge of updating the screen as the time controls are set
 // advanceTime(); works while the game is running, and is in charge of managing the timers and checking for timeout
 // displayCurrentTime(); works while the game is running, and is in charge of updating the screen as the timers count down
-// setTime(); works during both stages, and is in charge of changing the arrays to fit the variables
+// setTime(int timeSetting, bool player1, bool minutes); works during both stages, and is in charge of changing the arrays to fit the variables
+// menuPause(); works while the game is paused, and gives the user the option to add or subtract time, or end the game early (also checks to unpause the game)
+// get_ans(bool& var); stops execution and waits for a response from Button 1 or 2 (turns var to false if Button 1 is pressed, leaves it alone otherwise)
+// checkButtons(); checks the state of the 3 buttons and adjusts the button states buttonP1pressed, buttonP2pressed, and buttonP3pressed accordingly
+// startingGame(); starts the game, sets defaults, and reads time controls to EEPROM
 
 #include <Wire.h> // For communicating with the 7-segment displays
 #include <Adafruit_LEDBackpack.h> // For controlling the 4-digit 7-segment LED displays
@@ -34,12 +38,13 @@ int player1Minutes = 0, player1Seconds = 0, player2Minutes = 0, player2Seconds =
 int clone1, clone1s, clone2, clone2s;
 char player1Time[5] = "0000", player2Time[5] = "0000"; // Variables to control what is printed to the LED display
 int centiCounter1 = 0, centiCounter2 = 0, centiBeepCounter = 0; // Allows the clock to count in centiseconds for more accurate timing
-int whiteGames = 0, blackGames = 0;
-bool gameStarted = true, beepOn = true, beeping = false, pauseMenu = false, casual = true;
+int whiteGames = 0, blackGames = 0; // Games counter
+bool gameStarted = true, beepOn = true, beeping = false, pauseMenu = false, casual = true; // Various checks
 
 // Button states
 bool buttonP1pressed = false, buttonP2pressed = false, buttonP3pressed = false;
 
+// For buzzer melody
 const int G3 = 196, Arl = 220, B3 = 247, C4 = 262, C45 = 278, D4 = 294, E4 = 330, F4 = 349, F45 = 372, G4 = 392, Aru = 440, B4 = 494, C5 = 523, D5 = 566;
 
 int melody[] = {
@@ -67,19 +72,21 @@ void setup() {
   // Initialize LCD
   lcd.begin(16, 2);
 
+	// Welcome message
   lcd.setCursor(0, 0);
   lcd.print("Welcome! Have");
   lcd.setCursor(0, 1);
   lcd.print("a good game!");
   delay(2000);
 
+	// Turn beep off or on
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Turn beep off?");
 
   get_ans(beepOn);
 
-	// Check to use previous settings or not
+	// Set casual or competitive mode
   delay(200);
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -91,7 +98,7 @@ void setup() {
 	bool checker2 = true;
 	if (EEPROM.read(7) != casual) {
 		EEPROM.write(7, casual);
-		checker2 = false;
+		checker2 = false; // Skip "Use previous time?" settings if this setting doesn't match previous setting
 	}
 
 	if (checker2) {
@@ -103,8 +110,6 @@ void setup() {
 	  lcd.setCursor(0, 1);
 	  lcd.print("time?");
 	  
-	  // Check to use previous settings or not
-	  
 	  get_ans(checker2);
 		
 		if (!checker2) {
@@ -114,12 +119,14 @@ void setup() {
 	    if (EEPROM.read(2) != 255) player2Minutes = EEPROM.read(2);
 	    if (EEPROM.read(3) != 255) player2Seconds = EEPROM.read(3);
 	    if (EEPROM.read(4) != 255) increment = EEPROM.read(4);
+			// Skip setup
 			setupPlayer = 2;
 	    setupNumber = 2;
 	    buttonP3pressed = true;
 	  }
 	}
-  
+
+	// Check to use previous score
   delay(200);
   lcd.clear();
   lcd.setCursor(0, 0);
