@@ -229,7 +229,7 @@ void loop() {
       while (whiteWon || blackWon) { // Infinitely makes the buzzer beep until chess clock is reset or turned off
         if (beepOn) {
 					// Melody
-          for (int thisNote = 0; thisNote < 16; thisNote++) {
+          for (int thisNote = 0; thisNote < 14; thisNote++) {
     				int noteDuration = 1000 / noteDurations[thisNote];
     				tone(buzzer, melody[thisNote], noteDuration);
     				int pauseBetweenNotes = noteDuration * 1.30;
@@ -415,7 +415,7 @@ void updateScreen() {
     display2.clear();
     setTime(player2Minutes, false, true);
     setTime(player2Seconds, false, false);
-    display2.showNumberDecEx(convertArrtoInt(player1Time), 0b01000000, false);
+    display2.showNumberDecEx(convertArrtoInt(player2Time), 0b01000000, false);
   } else { // Increment time control is being set
     //Clear both screens, print increment on display 1
     display1.clear();
@@ -424,13 +424,11 @@ void updateScreen() {
   }
 }
 
-int convertArrtoInt(int arr[]) {
-  int theTime = 0;
-	theTime += (arr[0] * 1000);
-	theTime += (arr[1] * 100);
-	theTime += (arr[2] * 10);
-	theTime += arr[3];
-	return theTime;
+int convertArrtoInt(char arr[]) {
+  return (arr[0] - '0') * 1000 +
+         (arr[1] - '0') * 100 +
+         (arr[2] - '0') * 10 +
+         (arr[3] - '0');
 }
 
 // While the game is running, based on whose turn it is, this function will update the corresponding timer and call
