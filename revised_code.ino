@@ -11,7 +11,7 @@
 // startingGame(); starts the game, sets defaults, and reads time controls to EEPROM
 
 #include <Wire.h> // For communicating with the 7-segment displays
-#include <TM1637Display.h> // For controlling the 4-digit 7-segment LED displays
+#include <Adafruit_LEDBackpack.h> // For controlling the 4-digit 7-segment LED displays
 #include <LiquidCrystal.h> // To control the LCD display
 #include <EEPROM.h> // Use the EEPROM memory to write time controls used for next time
 
@@ -20,8 +20,8 @@ const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 // Initializing LED displays
-TM1637Display display1(A4, A5);
-TM1637Display display2(A2, A3);
+Adafruit_7segment led_display1 = Adafruit_7segment();
+Adafruit_7segment led_display2 = Adafruit_7segment();
 
 // Button Pins
 const int buttonP3 = 8; // Pause game or move to next setting
@@ -64,8 +64,10 @@ void setup() {
   pinMode(buzzer, OUTPUT);
 
   // Initialize LED displays
-  display1.setBrightness(0x0f);
-  display2.setBrightness(0x0f);
+  led_display1.begin(112);
+  led_display2.begin(113);
+  led_display1.writeDisplay();
+  led_display2.writeDisplay();
 
   // Initialize LCD
   lcd.begin(16, 2);
@@ -159,18 +161,19 @@ void loop() {
     // Handle button presses for switching players
     if (digitalRead(buttonP1) == HIGH && currentPlayer != 1) { // Player 1 button is pressed and the current player is player 1
 			if (casual) {
-			  player1Minutes = clone1;
-			  player1Seconds = clone1s;
-				} else {
-			      player1Seconds += increment;
-			      while (player1Seconds >= 60) { // In case the increment increases the # of seconds to be greater than 59
-			        player1Minutes++;
-			        player1Seconds -= 60;
-			      }
-				}
+				player1Minutes = clone1;
+				player1Seconds = clone1s;
+			} else {
+	      player1Seconds += increment;
+	      while (player1Seconds >= 60) { // In case the increment increases the # of seconds to be greater than 59
+	        player1Minutes++;
+	        player1Seconds -= 60;
+	      }
+			}
       currentPlayer = 1; // Change current player to black (player 2)
-			display1.clear();
-      // Beep to switch players
+      led_display1.drawColon(true);
+      led_display1.writeDisplay();
+			// Beep to switch players
       if (beepOn) {
         tone(buzzer, 523);
         delay(100);
@@ -189,8 +192,9 @@ void loop() {
 	        player2Seconds -= 60;
 	      }
 			}
-			display2.clear();
       currentPlayer = 0; // Change current player to white (player 1)
+      led_display2.drawColon(true);
+      led_display2.writeDisplay();
       if (beepOn) {
         tone(buzzer, 523);
         delay(100);
@@ -315,7 +319,7 @@ void editTime(bool notPaused) {
 				} else {
 					player1Minutes++;
 				}
-        if (player1Minutes > 99) player1Minutes = 99; // If minutes are over 120, bring it back to 120
+        if (player1Minutes > 120) player1Minutes = 120; // If minutes are over 120, bring it back to 120
       } else if (setupNumber == 1) { // Seconds are being set
         player1Seconds++;
         if (player1Seconds >= 60) player1Seconds = 59; // If seconds are over 59, bring it back to 59
@@ -331,7 +335,7 @@ void editTime(bool notPaused) {
 				} else {
 					player2Minutes++;
 				}
-        if (player2Minutes > 99) player2Minutes = 99; // If minutes are over 120, bring it back to 120
+        if (player2Minutes > 120) player2Minutes = 120; // If minutes are over 120, bring it back to 120
       } else if (setupNumber == 1) { // Seconds are being set
         player2Seconds++;
         if (player2Seconds >= 60) player2Seconds = 59; // If seconds are over 59, bring it back to 59
@@ -406,31 +410,30 @@ void updateScreen() {
   // Displays appropriate label based on setting stage
   if (setupPlayer == 0) { // Player 1's time is being set
     // Print White's time on display 1
-    display1.clear();
+    led_display1.clear();
     setTime(player1Minutes, true, true);
     setTime(player1Seconds, true, false);
-    display1.showNumberDecEx(convertArrtoInt(player1Time), 0b01000000, false);
+    led_display1.println(player1Time);
+    led_display1.drawColon(true);
+    led_display1.writeDisplay();
   } else if (setupPlayer == 1) { // Player 2's time is being set
     // Print Black's time on display 2
-    display2.clear();
+    led_display2.clear();
     setTime(player2Minutes, false, true);
     setTime(player2Seconds, false, false);
-    display2.showNumberDecEx(convertArrtoInt(player1Time), 0b01000000, false);
+    led_display2.println(player2Time);
+    led_display2.drawColon(true);
+    led_display2.writeDisplay();
   } else { // Increment time control is being set
     //Clear both screens, print increment on display 1
-    display1.clear();
-    display2.clear();
-		display1.showNumberDecEx(increment, 0b00000000, false);
+    led_display1.clear();
+    led_display2.clear();
+    led_display1.println(increment);
+    led_display1.drawColon(false);
+    led_display2.drawColon(false);
+    led_display1.writeDisplay();
+    led_display2.writeDisplay();
   }
-}
-
-int convertArrtoInt(int arr[]) {
-  int theTime = 0;
-	theTime += (arr[0] * 1000);
-	theTime += (arr[1] * 100);
-	theTime += (arr[2] * 10);
-	theTime += arr[3];
-	return theTime;
 }
 
 // While the game is running, based on whose turn it is, this function will update the corresponding timer and call
@@ -582,29 +585,30 @@ void displayCurrentTime() {
   }
 
   // Player 1 (White) time display
-  display1.clear();
-  display2.clear();
-	bool d1colon = true, d2colon = true;
+  led_display1.clear();
+  led_display2.clear();
   if (centiCounter1 < 5 && currentPlayer == 0) {
-    d1colon = false;
-  }
+    led_display1.drawColon(false);
+    led_display2.drawColon(true);
+  } else {
+    led_display1.drawColon(true);
+  } 
   if (centiCounter2 < 5 && currentPlayer == 1) {
-    d2colon = false;
+    led_display2.drawColon(false);
+    led_display1.drawColon(true);
+  } else {
+    led_display2.drawColon(true);
   }
 	setTime(player1Minutes, true, true);
   setTime(player1Seconds, true, false);
-	if (d1colon)
-		display1.showNumberDecEx(convertArrtoInt(player1Time), 0b01000000, false);
-	else
-		display1.showNumberDecEx(convertArrtoInt(player1Time), 0b00000000, false);
+  led_display1.println(player1Time);
+  led_display1.writeDisplay();
   
   // Player 2 (Black) time display
 	setTime(player2Minutes, false, true);
 	setTime(player2Seconds, false, false);
-  if (d2colon)
-		display2.showNumberDecEx(convertArrtoInt(player2Time), 0b01000000, false);
-	else
-		display2.showNumberDecEx(convertArrtoInt(player2Time), 0b00000000, false);
+  led_display2.println(player2Time);
+  led_display2.writeDisplay();
 }
 
 // Sets the arrays player1Time and player2Time to the appropriate numbers
@@ -626,16 +630,38 @@ void setTime(int timeSetting, bool player1, bool minutes) {
     if (timeSetting < 10) {
       player1Time[firstVar] = '0';
       player1Time[secondVar] = timeSetting + '0';
-    } else {
+    } else if (timeSetting < 100) {
       player1Time[firstVar] = timeSetting / 10 + '0';
+      player1Time[secondVar] = timeSetting % 10 + '0';
+    } else {
+      // Hexadecimal Display
+      int temp = timeSetting / 10;
+      if (temp == 10) {
+        player1Time[firstVar] = 'A';
+      } else if (temp == 11) {
+        player1Time[firstVar] = 'B';
+      } else if (temp == 12) {
+        player1Time[firstVar] = 'C';
+      }
       player1Time[secondVar] = timeSetting % 10 + '0';
     }
   } else {
     if (timeSetting < 10) {
       player2Time[firstVar] = '0';
       player2Time[secondVar] = timeSetting + '0';
-    } else {
+    } else if (timeSetting < 100) {
       player2Time[firstVar] = timeSetting / 10 + '0';
+      player2Time[secondVar] = timeSetting % 10 + '0';
+    } else {
+      // Hexadecimal Display
+      int temp = timeSetting / 10 + '0';
+      if (temp == 10) {
+        player2Time[firstVar] = 'A';
+      } else if (temp == 11) {
+        player2Time[firstVar] = 'B';
+      } else if (temp == 12) {
+        player2Time[firstVar] = 'C';
+      }
       player2Time[secondVar] = timeSetting % 10 + '0';
     }
   }
@@ -702,8 +728,10 @@ void menuPause() {
       buttonP2pressed = false;
     	buttonP3pressed = false;
   		// Clear Player 2 Screen
-      display2.clear();	
-			display2.showNumberDecEx(0000, 0b01000000, true);
+      led_display2.clear();	
+      led_display2.println("0000");
+      led_display2.drawColon(true);
+    	led_display2.writeDisplay();
 		}
   
     delay(200);
