@@ -315,7 +315,7 @@ void editTime(bool notPaused) {
 				} else {
 					player1Minutes++;
 				}
-        if (player1Minutes > 120) player1Minutes = 120; // If minutes are over 120, bring it back to 120
+        if (player1Minutes > 99) player1Minutes = 99; // If minutes are over 120, bring it back to 120
       } else if (setupNumber == 1) { // Seconds are being set
         player1Seconds++;
         if (player1Seconds >= 60) player1Seconds = 59; // If seconds are over 59, bring it back to 59
@@ -331,7 +331,7 @@ void editTime(bool notPaused) {
 				} else {
 					player2Minutes++;
 				}
-        if (player2Minutes > 120) player2Minutes = 120; // If minutes are over 120, bring it back to 120
+        if (player2Minutes > 99) player2Minutes = 99; // If minutes are over 120, bring it back to 120
       } else if (setupNumber == 1) { // Seconds are being set
         player2Seconds++;
         if (player2Seconds >= 60) player2Seconds = 59; // If seconds are over 59, bring it back to 59
@@ -582,30 +582,29 @@ void displayCurrentTime() {
   }
 
   // Player 1 (White) time display
-  led_display1.clear();
-  led_display2.clear();
+  display1.clear();
+  display2.clear();
+	bool d1colon = true, d2colon = true;
   if (centiCounter1 < 5 && currentPlayer == 0) {
-    led_display1.drawColon(false);
-    led_display2.drawColon(true);
-  } else {
-    led_display1.drawColon(true);
-  } 
+    d1colon = false;
+  }
   if (centiCounter2 < 5 && currentPlayer == 1) {
-    led_display2.drawColon(false);
-    led_display1.drawColon(true);
-  } else {
-    led_display2.drawColon(true);
+    d2colon = false;
   }
 	setTime(player1Minutes, true, true);
   setTime(player1Seconds, true, false);
-  led_display1.println(player1Time);
-  led_display1.writeDisplay();
+	if (d1colon)
+		display1.showNumberDecEx(convertArrtoInt(player1Time), 0b01000000, false);
+	else
+		display1.showNumberDecEx(convertArrtoInt(player1Time), 0b00000000, false);
   
   // Player 2 (Black) time display
 	setTime(player2Minutes, false, true);
 	setTime(player2Seconds, false, false);
-  led_display2.println(player2Time);
-  led_display2.writeDisplay();
+  if (d2colon)
+		display2.showNumberDecEx(convertArrtoInt(player2Time), 0b01000000, false);
+	else
+		display2.showNumberDecEx(convertArrtoInt(player2Time), 0b00000000, false);
 }
 
 // Sets the arrays player1Time and player2Time to the appropriate numbers
@@ -627,38 +626,16 @@ void setTime(int timeSetting, bool player1, bool minutes) {
     if (timeSetting < 10) {
       player1Time[firstVar] = '0';
       player1Time[secondVar] = timeSetting + '0';
-    } else if (timeSetting < 100) {
-      player1Time[firstVar] = timeSetting / 10 + '0';
-      player1Time[secondVar] = timeSetting % 10 + '0';
     } else {
-      // Hexadecimal Display
-      int temp = timeSetting / 10;
-      if (temp == 10) {
-        player1Time[firstVar] = 'A';
-      } else if (temp == 11) {
-        player1Time[firstVar] = 'B';
-      } else if (temp == 12) {
-        player1Time[firstVar] = 'C';
-      }
+      player1Time[firstVar] = timeSetting / 10 + '0';
       player1Time[secondVar] = timeSetting % 10 + '0';
     }
   } else {
     if (timeSetting < 10) {
       player2Time[firstVar] = '0';
       player2Time[secondVar] = timeSetting + '0';
-    } else if (timeSetting < 100) {
-      player2Time[firstVar] = timeSetting / 10 + '0';
-      player2Time[secondVar] = timeSetting % 10 + '0';
     } else {
-      // Hexadecimal Display
-      int temp = timeSetting / 10 + '0';
-      if (temp == 10) {
-        player2Time[firstVar] = 'A';
-      } else if (temp == 11) {
-        player2Time[firstVar] = 'B';
-      } else if (temp == 12) {
-        player2Time[firstVar] = 'C';
-      }
+      player2Time[firstVar] = timeSetting / 10 + '0';
       player2Time[secondVar] = timeSetting % 10 + '0';
     }
   }
@@ -725,10 +702,8 @@ void menuPause() {
       buttonP2pressed = false;
     	buttonP3pressed = false;
   		// Clear Player 2 Screen
-      led_display2.clear();	
-      led_display2.println("0000");
-      led_display2.drawColon(true);
-    	led_display2.writeDisplay();
+      display2.clear();	
+			display2.showNumberDecEx(0000, 0b01000000, true);
 		}
   
     delay(200);
