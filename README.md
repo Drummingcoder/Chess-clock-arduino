@@ -6,6 +6,9 @@ https://www.tinkercad.com/things/izdj3lSTSRr-my-chess-clock
 The second version (v2.0) of my code (revised_code.ino) is made for a different chess clock with the following design:
 https://www.tinkercad.com/things/9GNWRFxF56N-my-chess-clock-v20
 
+There's an another version of the code (tm1637_implementation.ino) meant for a chess clock with TM1637 clock displays
+instead of the I2C displays used in the TinkerCAD version.
+
 TLDR Features: 
 - Separate times for Players 1 and 2
 - Increment time control
