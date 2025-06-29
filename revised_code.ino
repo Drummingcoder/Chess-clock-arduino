@@ -11,7 +11,7 @@
 // startingGame(); starts the game, sets defaults, and reads time controls to EEPROM
 
 #include <Wire.h> // For communicating with the 7-segment displays
-#include <Adafruit_LEDBackpack.h> // For controlling the 4-digit 7-segment LED displays
+#include <TM1637Display.h> // For controlling the 4-digit 7-segment LED displays
 #include <LiquidCrystal.h> // To control the LCD display
 #include <EEPROM.h> // Use the EEPROM memory to write time controls used for next time
 
@@ -20,8 +20,8 @@ const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 // Initializing LED displays
-Adafruit_7segment led_display1 = Adafruit_7segment();
-Adafruit_7segment led_display2 = Adafruit_7segment();
+TM1637Display display1(A4, A5);
+TM1637Display display2(A2, A3);
 
 // Button Pins
 const int buttonP3 = 8; // Pause game or move to next setting
@@ -64,10 +64,8 @@ void setup() {
   pinMode(buzzer, OUTPUT);
 
   // Initialize LED displays
-  led_display1.begin(112);
-  led_display2.begin(113);
-  led_display1.writeDisplay();
-  led_display2.writeDisplay();
+  display1.setBrightness(0x0f);
+  display2.setBrightness(0x0f);
 
   // Initialize LCD
   lcd.begin(16, 2);
@@ -161,19 +159,18 @@ void loop() {
     // Handle button presses for switching players
     if (digitalRead(buttonP1) == HIGH && currentPlayer != 1) { // Player 1 button is pressed and the current player is player 1
 			if (casual) {
-				player1Minutes = clone1;
-				player1Seconds = clone1s;
-			} else {
-	      player1Seconds += increment;
-	      while (player1Seconds >= 60) { // In case the increment increases the # of seconds to be greater than 59
-	        player1Minutes++;
-	        player1Seconds -= 60;
-	      }
-			}
+			  player1Minutes = clone1;
+			  player1Seconds = clone1s;
+				} else {
+			      player1Seconds += increment;
+			      while (player1Seconds >= 60) { // In case the increment increases the # of seconds to be greater than 59
+			        player1Minutes++;
+			        player1Seconds -= 60;
+			      }
+				}
       currentPlayer = 1; // Change current player to black (player 2)
-      led_display1.drawColon(true);
-      led_display1.writeDisplay();
-			// Beep to switch players
+			display1.clear();
+      // Beep to switch players
       if (beepOn) {
         tone(buzzer, 523);
         delay(100);
@@ -192,9 +189,8 @@ void loop() {
 	        player2Seconds -= 60;
 	      }
 			}
+			display2.clear();
       currentPlayer = 0; // Change current player to white (player 1)
-      led_display2.drawColon(true);
-      led_display2.writeDisplay();
       if (beepOn) {
         tone(buzzer, 523);
         delay(100);
@@ -410,30 +406,31 @@ void updateScreen() {
   // Displays appropriate label based on setting stage
   if (setupPlayer == 0) { // Player 1's time is being set
     // Print White's time on display 1
-    led_display1.clear();
+    display1.clear();
     setTime(player1Minutes, true, true);
     setTime(player1Seconds, true, false);
-    led_display1.println(player1Time);
-    led_display1.drawColon(true);
-    led_display1.writeDisplay();
+    display1.showNumberDecEx(convertArrtoInt(player1Time), 0b01000000, false);
   } else if (setupPlayer == 1) { // Player 2's time is being set
     // Print Black's time on display 2
-    led_display2.clear();
+    display2.clear();
     setTime(player2Minutes, false, true);
     setTime(player2Seconds, false, false);
-    led_display2.println(player2Time);
-    led_display2.drawColon(true);
-    led_display2.writeDisplay();
+    display2.showNumberDecEx(convertArrtoInt(player1Time), 0b01000000, false);
   } else { // Increment time control is being set
     //Clear both screens, print increment on display 1
-    led_display1.clear();
-    led_display2.clear();
-    led_display1.println(increment);
-    led_display1.drawColon(false);
-    led_display2.drawColon(false);
-    led_display1.writeDisplay();
-    led_display2.writeDisplay();
+    display1.clear();
+    display2.clear();
+		display1.showNumberDecEx(increment, 0b00000000, false);
   }
+}
+
+int convertArrtoInt(int arr[]) {
+  int theTime = 0;
+	theTime += (arr[0] * 1000);
+	theTime += (arr[1] * 100);
+	theTime += (arr[2] * 10);
+	theTime += arr[3];
+	return theTime;
 }
 
 // While the game is running, based on whose turn it is, this function will update the corresponding timer and call
