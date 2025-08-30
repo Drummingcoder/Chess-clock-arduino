@@ -17,11 +17,10 @@ TLDR Features:
 - The difference between v1.0 and v2.0 is that v2.0 has two additional displays to show Player 1 and 2 times separately
 
 To be added in version 2.0:
-- Blinking minutes or seconds when setting up
 - Revamp settings so that only one button has to be pressed (if trying to go fast)
 - Better time handling using millis(), using delay() for now
   - Add a centisecond display (extra digit to decisecond display) after this improvement
-- Stop the excessive blinking of the clock displays
+- Stop the excessive blinking of the clock displays //Need to check if this works
 - Make the button functionality more responsive by changing the button to wait for input before delaying
 - Set time and date clock and display time and date when chess clock not in use or only time in corner when chess clock being used
 
