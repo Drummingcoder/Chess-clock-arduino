@@ -10,7 +10,6 @@
 // checkButtons(); checks the state of the 3 buttons and adjusts the button states buttonP1pressed, buttonP2pressed, and buttonP3pressed accordingly
 // startingGame(); starts the game, sets defaults, and reads time controls to EEPROM
 
-#include <Wire.h> // For communicating with the 7-segment displays
 #include <TM1637Display.h> // For controlling the 4-digit 7-segment LED displays
 #include <LiquidCrystal.h> // To control the LCD display
 #include <EEPROM.h> // Use the EEPROM memory to write time controls used for next time
@@ -64,8 +63,8 @@ void setup() {
   pinMode(buzzer, OUTPUT);
 
   // Initialize LED displays
-  display1.setBrightness(0x0f);
-  display2.setBrightness(0x0f);
+  display1.setBrightness(0x04);
+  display2.setBrightness(0x04);
 
   // Initialize LCD
   lcd.begin(16, 2);
