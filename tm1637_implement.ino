@@ -34,7 +34,6 @@ int setupNumber = 0;  // Controls from 0 to 1
 int currentPlayer = 0; // 0 for Player 1 (White), 1 for Player 2 (Black)
 bool gameRunning = false, gamePaused = false, whiteWon = false, blackWon = false; // Various check variables to check condition of the game
 int player1Minutes = 0, player1Seconds = 0, player2Minutes = 0, player2Seconds = 0, increment = 0; // Store the time controls
-int pre1Mins = 0, pre1Secs = 0, pre2Mins = 0, pre2Secs = 0, preInc = 0;
 int clone1, clone1s, clone2, clone2s;
 char player1Time[5] = "0000", player2Time[5] = "0000"; // Variables to control what is printed to the LED display
 int centiCounter1 = 0, centiCounter2 = 0, centiBeepCounter = 0; // Allows the clock to count in centiseconds for more accurate timing
@@ -58,7 +57,7 @@ float noteDurations[] = {
 // Runs once after the chess clock starts up, sets up variables and reads from EEPROM
 void setup() {
   // Setup pin modes
-  pinMode(buttonP3, INPUT);
+  pinMode(buttonP3, INPUT_PULLUP);
   pinMode(buttonP2, INPUT);
   pinMode(buttonP1, INPUT);
   pinMode(buzzer, OUTPUT);
@@ -85,7 +84,7 @@ void setup() {
   get_ans(beepOn);
 
 	// Set casual or competitive mode
-  delay(1000);
+  delay(200);
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Competitive or");
@@ -101,7 +100,7 @@ void setup() {
 
 	if (checker2) {
 	  // Check to use previous settings or not
-	  delay(1000);
+	  delay(200);
 	  lcd.clear();
 	  lcd.setCursor(0, 0);
 	  lcd.print("Use previous");
@@ -125,7 +124,7 @@ void setup() {
 	}
 
 	// Check to use previous score
-  delay(1000);
+  delay(200);
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Use previous");
@@ -198,7 +197,7 @@ void loop() {
         beeping = false;
         centiBeepCounter = 0;
       }
-    } else if (digitalRead(buttonP3) == HIGH) { // Pause button is pressed
+    } else if (digitalRead(buttonP3) == LOW) { // Pause button is pressed
       buttonP3pressed = true; // This variable is checked in advanceTime(); so no action is taken regarding this variable in this function
     } else { // No buttons are pressed
       buttonP1pressed = false; // Not used when game is running, but good to keep off in case
@@ -248,15 +247,15 @@ void loop() {
                 // the centiseconds counter to only increment every centisecond and therefore count correctly
   } else {
     // If the game is not running (meaning that the time controls are being set up), execute this section of the code
-    
-    // Calls updateScreen() to update the screen as the time variables change
-    updateScreen();
+
+    // Checks each button to see if it's pressed, and sets the button variables to the appropriate values
+    checkButtons();
     
     // Calls editTime() to change the values of the time control variables or advance the setting stage
     editTime(true);
 
-    // Checks each button to see if it's pressed, and sets the button variables to the appropriate values
-    checkButtons();
+    // Calls updateScreen() to update the screen as the time variables change
+    updateScreen();
     
     delay(200); // Debounce delay
   }
@@ -301,7 +300,13 @@ void editTime(bool notPaused) {
 			}
     }
 
-    delay(500); // Small delay before the game begins
+    delay(500);
+
+    while (digitalRead(buttonP3) == LOW) {
+      delay(10);
+    }
+    
+    buttonP3pressed = false;
   }
   if (buttonP2pressed) { // Increment button is pressed
     if (setupPlayer == 0) { // Player 1 (white)'s time is being set
@@ -406,32 +411,21 @@ void updateScreen() {
   // Displays appropriate label based on setting stage
   if (setupPlayer == 0) { // Player 1's time is being set
     // Print White's time on display 1
-    if (player1Minutes != pre1Mins || player1Seconds != pre1Secs) {
-      display1.clear();
-      setTime(player1Minutes, true, true);
-      setTime(player1Seconds, true, false);
-      display1.showNumberDecEx(convertArrtoInt(player1Time), 0b01000000, false);
-      pre1Mins = player1Minutes;
-      pre1Secs = player1Seconds;
-    }
+    display1.clear();
+    setTime(player1Minutes, true, true);
+    setTime(player1Seconds, true, false);
+    display1.showNumberDecEx(convertArrtoInt(player1Time), 0b01000000, false);
   } else if (setupPlayer == 1) { // Player 2's time is being set
     // Print Black's time on display 2
-    if (player2Minutes != pre2Mins || player2Seconds != pre2Secs) {
-      display2.clear();
-      setTime(player2Minutes, false, true);
-      setTime(player2Seconds, false, false);
-      display2.showNumberDecEx(convertArrtoInt(player2Time), 0b01000000, false);
-      pre2Mins = player2Minutes;
-      pre2Secs = player2Seconds;
-    }
+    display2.clear();
+    setTime(player2Minutes, false, true);
+    setTime(player2Seconds, false, false);
+    display2.showNumberDecEx(convertArrtoInt(player2Time), 0b01000000, false);
   } else { // Increment time control is being set
     //Clear both screens, print increment on display 1
-    if (preInc != increment) {
-      display1.clear();
-      display2.clear();
-      display1.showNumberDecEx(increment, 0b00000000, false);
-      preInc = increment;
-    }
+    display1.clear();
+    display2.clear();
+		display1.showNumberDecEx(increment, 0b00000000, false);
   }
 }
 
@@ -589,37 +583,31 @@ void displayCurrentTime() {
     lcd.setCursor(14, 1);
     lcd.print("  ");
   }
-  bool d1colon = true, d2colon = true;
 
   // Player 1 (White) time display
-  if (player1Minutes != pre1Mins || player1Seconds != pre1Secs) {
-    display1.clear();
-    if (centiCounter1 < 5 && currentPlayer == 0) {
-      d1colon = false;
-    }
-    setTime(player1Minutes, true, true);
-    setTime(player1Seconds, true, false);
-    if (d1colon)
-      display1.showNumberDecEx(convertArrtoInt(player1Time), 0b01000000, false);
-    else
-      display1.showNumberDecEx(convertArrtoInt(player1Time), 0b00000000, false);
-    pre1Mins = player1Minutes;
-    pre1Secs = player1Seconds;
+  display1.clear();
+  display2.clear();
+	bool d1colon = true, d2colon = true;
+  if (centiCounter1 < 5 && currentPlayer == 0) {
+    d1colon = false;
   }
+  if (centiCounter2 < 5 && currentPlayer == 1) {
+    d2colon = false;
+  }
+	setTime(player1Minutes, true, true);
+  setTime(player1Seconds, true, false);
+	if (d1colon)
+		display1.showNumberDecEx(convertArrtoInt(player1Time), 0b01000000, false);
+	else
+		display1.showNumberDecEx(convertArrtoInt(player1Time), 0b00000000, false);
   
   // Player 2 (Black) time display
-  if (player2Minutes != pre2Mins || player2Seconds != pre2Secs) {
-    display2.clear();
-    if (centiCounter2 < 5 && currentPlayer == 1) {
-      d2colon = false;
-    }
-    setTime(player2Minutes, false, true);
-    setTime(player2Seconds, false, false);
-    if (d2colon)
-      display2.showNumberDecEx(convertArrtoInt(player2Time), 0b01000000, false);
-    else
-      display2.showNumberDecEx(convertArrtoInt(player2Time), 0b00000000, false);
-  }
+	setTime(player2Minutes, false, true);
+	setTime(player2Seconds, false, false);
+  if (d2colon)
+		display2.showNumberDecEx(convertArrtoInt(player2Time), 0b01000000, false);
+	else
+		display2.showNumberDecEx(convertArrtoInt(player2Time), 0b00000000, false);
 }
 
 // Sets the arrays player1Time and player2Time to the appropriate numbers
@@ -669,7 +657,7 @@ void menuPause() {
     lcd.clear();
     updateScreen();
     delay(200); // Debounce delay
-  } else if ((digitalRead(buttonP3) == HIGH) && (!pauseMenu)) { // Pause button is pressed to unpause the game
+  } else if ((digitalRead(buttonP3) == LOW) && (!pauseMenu)) { // Pause button is pressed to unpause the game
   	gamePaused = false;
     buttonP3pressed = false; // Ensure that the game isn't paused again in the advanceTime() function
     lcd.clear();
@@ -744,6 +732,7 @@ void get_ans(bool& var) {
       checker = false;
     }
   }
+  delay(100);
 }
 
 void checkButtons() {
@@ -757,7 +746,7 @@ void checkButtons() {
     buttonP1pressed = false;
     buttonP2pressed = true;
     buttonP3pressed = false;
-  } else if (digitalRead(buttonP3) == HIGH) { // SET button is pressed
+  } else if (digitalRead(buttonP3) == LOW) { // SET button is pressed
     buttonP1pressed = false;
     buttonP2pressed = false;
     buttonP3pressed = true;
