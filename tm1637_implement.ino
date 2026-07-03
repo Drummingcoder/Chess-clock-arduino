@@ -43,6 +43,129 @@ bool gameStarted = true, beepOn = true, beeping = false, pauseMenu = false, casu
 // Button states
 bool buttonP1pressed = false, buttonP2pressed = false, buttonP3pressed = false;
 
+// millis()-based timing and redraw state
+const unsigned long CLOCK_TICK_MS = 100;      // 10 ticks at 100 ms each = 1 displayed second.
+const unsigned long DEBOUNCE_MS = 200;
+const unsigned long SET_DEBOUNCE_MS = 500;
+
+unsigned long lastClockTickMillis = 0;
+unsigned long lastSetupButtonMillis = 0;
+unsigned long lastPauseButtonMillis = 0;
+unsigned long beepStopMillis = 0;
+
+int lastDisplay1Value = -1;
+int lastDisplay2Value = -1;
+uint8_t lastDisplay1Colon = 255;
+uint8_t lastDisplay2Colon = 255;
+bool display1Blanked = false;
+bool display2Blanked = false;
+
+int lastSetupPlayer = -1;
+int lastSetupNumber = -1;
+int lastSetupP1Minutes = -1;
+int lastSetupP1Seconds = -1;
+int lastSetupP2Minutes = -1;
+int lastSetupP2Seconds = -1;
+int lastSetupIncrement = -1;
+
+bool lastGameLcdInitialized = false;
+int lastDisplayedWhiteGames = -1;
+int lastDisplayedBlackGames = -1;
+int lastDisplayedDiffMinutes = 999;
+int lastDisplayedDiffSeconds = 999;
+bool lastDisplayedDiffPositive = false;
+bool lastDisplayedCasual = false;
+int lastDisplayedP1LowTick = -1;
+int lastDisplayedP2LowTick = -1;
+
+void startBeep(unsigned int durationMs) {
+  if (beepOn) {
+    tone(buzzer, 523);
+    beepStopMillis = millis() + durationMs;
+    beeping = true;
+  }
+}
+
+void serviceBeep() {
+  if (beeping && (long)(millis() - beepStopMillis) >= 0) {
+    noTone(buzzer);
+    beeping = false;
+    centiBeepCounter = 0;
+  }
+}
+
+void forceDisplayRefresh() {
+  lastDisplay1Value = -1;
+  lastDisplay2Value = -1;
+  lastDisplay1Colon = 255;
+  lastDisplay2Colon = 255;
+  display1Blanked = false;
+  display2Blanked = false;
+}
+
+void resetSetupDisplayCache() {
+  lastSetupPlayer = -1;
+  lastSetupNumber = -1;
+  lastSetupP1Minutes = -1;
+  lastSetupP1Seconds = -1;
+  lastSetupP2Minutes = -1;
+  lastSetupP2Seconds = -1;
+  lastSetupIncrement = -1;
+  forceDisplayRefresh();
+}
+
+void resetGameLcdCache() {
+  lastGameLcdInitialized = false;
+  lastDisplayedWhiteGames = -1;
+  lastDisplayedBlackGames = -1;
+  lastDisplayedDiffMinutes = 999;
+  lastDisplayedDiffSeconds = 999;
+  lastDisplayedDiffPositive = false;
+  lastDisplayedCasual = false;
+  lastDisplayedP1LowTick = -1;
+  lastDisplayedP2LowTick = -1;
+}
+
+void showDisplayIfChanged(TM1637Display& display, int value, uint8_t colonMask, bool& blanked, int& lastValue, uint8_t& lastColon) {
+  if (blanked || value != lastValue || colonMask != lastColon) {
+    display.showNumberDecEx(value, colonMask, false);
+    lastValue = value;
+    lastColon = colonMask;
+    blanked = false;
+  }
+}
+
+void blankDisplayIfNeeded(TM1637Display& display, bool& blanked, int& lastValue, uint8_t& lastColon) {
+  if (!blanked) {
+    display.clear();
+    blanked = true;
+    lastValue = -1;
+    lastColon = 255;
+  }
+}
+
+// Function prototypes
+void editTime(bool notPaused);
+void updateScreen();
+int convertArrtoInt(char arr[]);
+void advanceTime();
+void displayCurrentTime();
+void setTime(int timeSetting, bool player1, bool minutes);
+void menuPause();
+void get_ans(bool& var);
+void checkButtons();
+void startingGame();
+void handleTimeoutEnd();
+void resetForReplay();
+void resetAfterGameToSetup();
+void startBeep(unsigned int durationMs);
+void serviceBeep();
+void forceDisplayRefresh();
+void resetSetupDisplayCache();
+void resetGameLcdCache();
+void showDisplayIfChanged(TM1637Display& display, int value, uint8_t colonMask, bool& blanked, int& lastValue, uint8_t& lastColon);
+void blankDisplayIfNeeded(TM1637Display& display, bool& blanked, int& lastValue, uint8_t& lastColon);
+
 // For buzzer melody
 const int G3 = 196, Arl = 220, B3 = 247, C4 = 262, C45 = 278, D4 = 294, E4 = 330, F4 = 349, F45 = 372, G4 = 392, Aru = 440, B4 = 494, C5 = 523, D5 = 566;
 
@@ -145,58 +268,57 @@ void setup() {
 }
 
 void loop() {
+  serviceBeep();
+
   if (gameRunning) {
     // Start the game only when player 1 presses the button
     while (gameStarted) {
+      serviceBeep();
       if (digitalRead(buttonP1) == HIGH) {
         gameStarted = false;
         currentPlayer = 1;
+        lastClockTickMillis = millis();
         lcd.clear();
+        resetGameLcdCache();
+        forceDisplayRefresh();
       }
     }
-    
+
     // Handle button presses for switching players
     if (digitalRead(buttonP1) == HIGH && currentPlayer != 1) { // Player 1 button is pressed and the current player is player 1
-			if (casual) {
-			  player1Minutes = clone1;
-			  player1Seconds = clone1s;
-				} else {
-			      player1Seconds += increment;
-			      while (player1Seconds >= 60) { // In case the increment increases the # of seconds to be greater than 59
-			        player1Minutes++;
-			        player1Seconds -= 60;
-			      }
-				}
+      if (casual) {
+        player1Minutes = clone1;
+        player1Seconds = clone1s;
+      } else {
+        player1Seconds += increment;
+        while (player1Seconds >= 60) { // In case the increment increases the # of seconds to be greater than 59
+          player1Minutes++;
+          player1Seconds -= 60;
+        }
+      }
       currentPlayer = 1; // Change current player to black (player 2)
-			display1.clear();
-      // Beep to switch players
-      if (beepOn) {
-        tone(buzzer, 523);
-        delay(100);
-        noTone(buzzer);
-        beeping = false;
-        centiBeepCounter = 0;
-      }
+      blankDisplayIfNeeded(display1, display1Blanked, lastDisplay1Value, lastDisplay1Colon);
+      lastClockTickMillis = millis();
+      forceDisplayRefresh();
+      displayCurrentTime();
+      startBeep(100); // Beep to switch players without blocking the timer
     } else if (digitalRead(buttonP2) == HIGH && currentPlayer != 0) { // Player 2 button is pressed and the current player is player 2
-			if (casual) {
-				player2Minutes = clone2;
-				player2Seconds = clone2s;
-			} else {
-	      player2Seconds += increment;
-	      while (player2Seconds >= 60) {
-	        player2Minutes++;
-	        player2Seconds -= 60;
-	      }
-			}
-			display2.clear();
-      currentPlayer = 0; // Change current player to white (player 1)
-      if (beepOn) {
-        tone(buzzer, 523);
-        delay(100);
-        noTone(buzzer);
-        beeping = false;
-        centiBeepCounter = 0;
+      if (casual) {
+        player2Minutes = clone2;
+        player2Seconds = clone2s;
+      } else {
+        player2Seconds += increment;
+        while (player2Seconds >= 60) {
+          player2Minutes++;
+          player2Seconds -= 60;
+        }
       }
+      blankDisplayIfNeeded(display2, display2Blanked, lastDisplay2Value, lastDisplay2Colon);
+      currentPlayer = 0; // Change current player to white (player 1)
+      lastClockTickMillis = millis();
+      forceDisplayRefresh();
+      displayCurrentTime();
+      startBeep(100);
     } else if (digitalRead(buttonP3) == LOW) { // Pause button is pressed
       buttonP3pressed = true; // This variable is checked in advanceTime(); so no action is taken regarding this variable in this function
     } else { // No buttons are pressed
@@ -222,42 +344,37 @@ void loop() {
       lcd.print("White timeout");
     }
 
-    // Checks if the game is paused or over, and keeps execution in this loop until the Pause button is pressed again if game is paused,
-    // or game is ended, otherwise just pauses execution infinitely (which means that the game is over)
+    // Checks if the game is paused or over. If the game ended by timeout, offer the same replay/reset choice
+    // instead of getting stuck in the timeout melody forever.
     while (gamePaused) {
-      while (whiteWon || blackWon) { // Infinitely makes the buzzer beep until chess clock is reset or turned off
-        if (beepOn) {
-					// Melody
-          for (int thisNote = 0; thisNote < 14; thisNote++) {
-    				int noteDuration = 1000 / noteDurations[thisNote];
-    				tone(buzzer, melody[thisNote], noteDuration);
-    				int pauseBetweenNotes = noteDuration * 1.30;
-    				delay(pauseBetweenNotes);
-    				noTone(buzzer);
-  				}
-  				delay(500);
-  				noTone(buzzer);
-        }
+      if (whiteWon || blackWon) {
+        handleTimeoutEnd();
+      } else {
+        serviceBeep();
+        menuPause();
       }
-
-      delay(200); // Debounce delay
-      menuPause();
     }
-    delay(100); // Debounce delay, serves dual purpose of ensuring that advanceTime() function is only run every 0.01s, allowing
-                // the centiseconds counter to only increment every centisecond and therefore count correctly
   } else {
     // If the game is not running (meaning that the time controls are being set up), execute this section of the code
+    unsigned long now = millis();
+    if (now - lastSetupButtonMillis >= DEBOUNCE_MS) {
+      // Checks each button to see if it's pressed, and sets the button variables to the appropriate values
+      checkButtons();
 
-    // Checks each button to see if it's pressed, and sets the button variables to the appropriate values
-    checkButtons();
-    
-    // Calls editTime() to change the values of the time control variables or advance the setting stage
-    editTime(true);
+      // Calls editTime() to change the values of the time control variables or advance the setting stage
+      editTime(true);
 
-    // Calls updateScreen() to update the screen as the time variables change
+      if (buttonP1pressed || buttonP2pressed || buttonP3pressed) {
+        lastSetupButtonMillis = now;
+      }
+    } else {
+      buttonP1pressed = false;
+      buttonP2pressed = false;
+      buttonP3pressed = false;
+    }
+
+    // Calls updateScreen() to update the screen as the time variables change. It now redraws only when needed.
     updateScreen();
-    
-    delay(200); // Debounce delay
   }
 }
 
@@ -300,12 +417,12 @@ void editTime(bool notPaused) {
 			}
     }
 
-    delay(500);
+    lastSetupButtonMillis = millis();
 
     while (digitalRead(buttonP3) == LOW) {
-      delay(10);
+      serviceBeep();
     }
-    
+
     buttonP3pressed = false;
   }
   if (buttonP2pressed) { // Increment button is pressed
@@ -398,35 +515,59 @@ void editTime(bool notPaused) {
 
 // During the setup process, display the labels accordingly to the stage of setup it's in
 void updateScreen() {
+  bool labelsChanged = (setupPlayer != lastSetupPlayer || setupNumber != lastSetupNumber);
+  bool displayChanged = labelsChanged ||
+                        player1Minutes != lastSetupP1Minutes || player1Seconds != lastSetupP1Seconds ||
+                        player2Minutes != lastSetupP2Minutes || player2Seconds != lastSetupP2Seconds ||
+                        increment != lastSetupIncrement;
+
+  if (!displayChanged) return;
+
   // Initialize arrays of labels
   const char* labels[] = {"Minutes: ", "Seconds: ", "Increment: "};
   const char* player[] = {"Player 1: ", "Player 2: ", "Both: "};
 
-  // Display appropriate labels
-  lcd.setCursor(0,0);
-  lcd.print(player[setupPlayer]);
-  lcd.setCursor(0,1);
-  lcd.print(labels[setupNumber]);
+  // Display appropriate labels only when the setup stage changes
+  if (labelsChanged) {
+    lcd.setCursor(0, 0);
+    lcd.print("                ");
+    lcd.setCursor(0, 1);
+    lcd.print("                ");
+    lcd.setCursor(0,0);
+    lcd.print(player[setupPlayer]);
+    lcd.setCursor(0,1);
+    lcd.print(labels[setupNumber]);
+  }
 
   // Displays appropriate label based on setting stage
   if (setupPlayer == 0) { // Player 1's time is being set
     // Print White's time on display 1
-    display1.clear();
     setTime(player1Minutes, true, true);
     setTime(player1Seconds, true, false);
-    display1.showNumberDecEx(convertArrtoInt(player1Time), 0b01000000, false);
+    showDisplayIfChanged(display1, convertArrtoInt(player1Time), 0b01000000, display1Blanked, lastDisplay1Value, lastDisplay1Colon);
+    blankDisplayIfNeeded(display2, display2Blanked, lastDisplay2Value, lastDisplay2Colon);
   } else if (setupPlayer == 1) { // Player 2's time is being set
-    // Print Black's time on display 2
-    display2.clear();
+    // Keep White's completed setup time visible on display 1 while setting Black's time on display 2.
+    setTime(player1Minutes, true, true);
+    setTime(player1Seconds, true, false);
+    showDisplayIfChanged(display1, convertArrtoInt(player1Time), 0b01000000, display1Blanked, lastDisplay1Value, lastDisplay1Colon);
+
     setTime(player2Minutes, false, true);
     setTime(player2Seconds, false, false);
-    display2.showNumberDecEx(convertArrtoInt(player2Time), 0b01000000, false);
+    showDisplayIfChanged(display2, convertArrtoInt(player2Time), 0b01000000, display2Blanked, lastDisplay2Value, lastDisplay2Colon);
   } else { // Increment time control is being set
-    //Clear both screens, print increment on display 1
-    display1.clear();
-    display2.clear();
-		display1.showNumberDecEx(increment, 0b00000000, false);
+    // Clear both screens only when first entering this stage, print increment on display 1
+    showDisplayIfChanged(display1, increment, 0b00000000, display1Blanked, lastDisplay1Value, lastDisplay1Colon);
+    blankDisplayIfNeeded(display2, display2Blanked, lastDisplay2Value, lastDisplay2Colon);
   }
+
+  lastSetupPlayer = setupPlayer;
+  lastSetupNumber = setupNumber;
+  lastSetupP1Minutes = player1Minutes;
+  lastSetupP1Seconds = player1Seconds;
+  lastSetupP2Minutes = player2Minutes;
+  lastSetupP2Seconds = player2Seconds;
+  lastSetupIncrement = increment;
 }
 
 int convertArrtoInt(char arr[]) {
@@ -442,85 +583,102 @@ void advanceTime() {
   if (buttonP3pressed) { // Pause button is pressed
     gamePaused = true;
     lcd.clear();
+    resetGameLcdCache();
     return; // Return execution to loop()
   }
 
-  // Update timer based on whose turn it is
-  if (currentPlayer == 0) { // White's turn
-    if (centiCounter1 < 10) { // As this function only runs every 0.01s, this centisecond counter will increment at the correct time
-      centiCounter1++;
-    } else if (player1Seconds > 0) { // If there are seconds left to reduce
-      centiCounter1 = 0;
-      player1Seconds--;
-    } else if (player1Minutes > 0) { // If there are minutes left to reduce
-      centiCounter1 = 0;
-      player1Minutes--;
-      player1Seconds = 59;
-    } else { // White's time has run out, so Black wins
-      blackWon = true;
-      blackGames++;
-      if (whiteGames != EEPROM.read(5)) EEPROM.write(5, whiteGames);
-      if (blackGames != EEPROM.read(6)) EEPROM.write(6, blackGames);
-    }
-  } else if (currentPlayer == 1) { // Black's turn
-    if (centiCounter2 < 10) {
-      centiCounter2++;
-    } else if (player2Seconds > 0) { // If there are seconds left to reduce
-      centiCounter2 = 0;
-      player2Seconds--;
-    } else if (player2Minutes > 0) { // If there are minutes left to reduce
-      centiCounter2 = 0;
-      player2Minutes--;
-      player2Seconds = 59;
-    } else { // Black's time has run out, so White wins
-      whiteWon = true;
-      whiteGames++;
-      if (whiteGames != EEPROM.read(5)) EEPROM.write(5, whiteGames);
-      if (blackGames != EEPROM.read(6)) EEPROM.write(6, blackGames);
+  unsigned long now = millis();
+  bool timerChanged = false;
+  bool ticked = false;
+
+  while (now - lastClockTickMillis >= CLOCK_TICK_MS) {
+    lastClockTickMillis += CLOCK_TICK_MS;
+    ticked = true;
+
+    // Update timer based on whose turn it is
+    if (currentPlayer == 0) { // White's turn
+      if (centiCounter1 < 9) {
+        centiCounter1++;
+      } else if (player1Seconds > 0) { // If there are seconds left to reduce
+        centiCounter1 = 0;
+        player1Seconds--;
+        timerChanged = true;
+      } else if (player1Minutes > 0) { // If there are minutes left to reduce
+        centiCounter1 = 0;
+        player1Minutes--;
+        player1Seconds = 59;
+        timerChanged = true;
+      } else { // White's time has run out, so Black wins
+        blackWon = true;
+        blackGames++;
+        if (whiteGames != EEPROM.read(5)) EEPROM.write(5, whiteGames);
+        if (blackGames != EEPROM.read(6)) EEPROM.write(6, blackGames);
+        break;
+      }
+    } else if (currentPlayer == 1) { // Black's turn
+      if (centiCounter2 < 9) {
+        centiCounter2++;
+      } else if (player2Seconds > 0) { // If there are seconds left to reduce
+        centiCounter2 = 0;
+        player2Seconds--;
+        timerChanged = true;
+      } else if (player2Minutes > 0) { // If there are minutes left to reduce
+        centiCounter2 = 0;
+        player2Minutes--;
+        player2Seconds = 59;
+        timerChanged = true;
+      } else { // Black's time has run out, so White wins
+        whiteWon = true;
+        whiteGames++;
+        if (whiteGames != EEPROM.read(5)) EEPROM.write(5, whiteGames);
+        if (blackGames != EEPROM.read(6)) EEPROM.write(6, blackGames);
+        break;
+      }
     }
   }
 
-  // Call displayCurrentTime() to update the screen
-  displayCurrentTime();
+  // Update the display only when a tick can change the colon/low-time indicator or a full second changed the digits.
+  if (ticked || timerChanged || whiteWon || blackWon) {
+    displayCurrentTime();
+  }
 }
 
 // This function is responsible for updating the screen while the game is running, called by advanceTime()
 void displayCurrentTime() {
-	// Control the beep warnings
-  if (beeping && centiBeepCounter != 10) {
-    centiBeepCounter++;
-  } else if (beeping && centiBeepCounter == 10) {
-    noTone(buzzer);
-    beeping = false;
-  }               
-  if (((player1Minutes == 1 && player1Seconds == 0) && currentPlayer == 0) || ((player2Minutes == 1 && player2Seconds == 0) && currentPlayer == 1)) {
-    if (beepOn && (!gameStarted)) {
-      tone(buzzer, 523);
-      centiBeepCounter = 0;
-      beeping = true;
-    }
-  } else if (((player1Minutes == 0 && player1Seconds == 10) && currentPlayer == 0) || ((player2Minutes == 0 && player2Seconds == 10) && currentPlayer == 1)) {
-    if (beepOn && (!gameStarted)) {
-      tone(buzzer, 523);
-      centiBeepCounter = 0;
-      beeping = true;
-    }
+  serviceBeep();
+
+  // Warning beeps at 1:00 and 0:10, but only on the exact fresh tick so they do not retrigger all second.
+  if (((player1Minutes == 1 && player1Seconds == 0 && centiCounter1 == 0) && currentPlayer == 0) ||
+      ((player2Minutes == 1 && player2Seconds == 0 && centiCounter2 == 0) && currentPlayer == 1)) {
+    if (!gameStarted) startBeep(1000);
+  } else if (((player1Minutes == 0 && player1Seconds == 10 && centiCounter1 == 0) && currentPlayer == 0) ||
+             ((player2Minutes == 0 && player2Seconds == 10 && centiCounter2 == 0) && currentPlayer == 1)) {
+    if (!gameStarted) startBeep(1000);
   }
 
-  //LCD display
-  lcd.setCursor(0, 0);
-  lcd.print("<- W");
-  lcd.setCursor(12, 0); // Display on the right side of the same row
-  lcd.print("B ->");
-  lcd.setCursor(6, 0);
-  lcd.print(whiteGames);
-  lcd.print("- ");
-  lcd.print(blackGames);
+  // LCD display. Static labels are written once; changing values are updated only when their values change.
+  if (!lastGameLcdInitialized) {
+    lcd.setCursor(0, 0);
+    lcd.print("<- W");
+    lcd.setCursor(12, 0); // Display on the right side of the same row
+    lcd.print("B ->");
+    lastGameLcdInitialized = true;
+  }
 
-	// Display time difference if competitive mode
+  if (whiteGames != lastDisplayedWhiteGames || blackGames != lastDisplayedBlackGames) {
+    lcd.setCursor(6, 0);
+    lcd.print("      ");
+    lcd.setCursor(6, 0);
+    lcd.print(whiteGames);
+    lcd.print("- ");
+    lcd.print(blackGames);
+    lastDisplayedWhiteGames = whiteGames;
+    lastDisplayedBlackGames = blackGames;
+  }
+
+  // Display time difference if competitive mode
   if (!casual) {
     // Calculate time difference
-    lcd.setCursor(5, 1);
     int diffMinutes, diffSeconds, firstMinutes, firstSeconds, secondMinutes, secondSeconds;
     if (currentPlayer == 0) { // White's turn
       firstMinutes = player1Minutes;
@@ -545,69 +703,83 @@ void displayCurrentTime() {
       diffSeconds -= 60;
     }
 
-
-    if ((diffMinutes > 0) || (diffMinutes == 0 && diffSeconds >= 0)) {
-      lcd.print("+");
-    } else if ((diffMinutes < 0) || (diffMinutes == 0 && diffSeconds < 0)) {
-      lcd.print("-");
-    }
+    bool diffPositive = ((diffMinutes > 0) || (diffMinutes == 0 && diffSeconds >= 0));
 
     if (diffMinutes < 0) diffMinutes *= -1;
     if (diffSeconds < 0) diffSeconds *= -1;
 
-    if (diffMinutes < 10) lcd.print("0");
-    lcd.print(diffMinutes);
-    lcd.print(":");
-    if (diffSeconds < 10) lcd.print("0");
-    lcd.print(diffSeconds);
+    if (casual != lastDisplayedCasual || diffMinutes != lastDisplayedDiffMinutes || diffSeconds != lastDisplayedDiffSeconds || diffPositive != lastDisplayedDiffPositive) {
+      lcd.setCursor(5, 1);
+      lcd.print("      ");
+      lcd.setCursor(5, 1);
+      if (diffPositive) lcd.print("+");
+      else lcd.print("-");
+      if (diffMinutes < 10) lcd.print("0");
+      lcd.print(diffMinutes);
+      lcd.print(":");
+      if (diffSeconds < 10) lcd.print("0");
+      lcd.print(diffSeconds);
+
+      lastDisplayedDiffMinutes = diffMinutes;
+      lastDisplayedDiffSeconds = diffSeconds;
+      lastDisplayedDiffPositive = diffPositive;
+      lastDisplayedCasual = casual;
+    }
   } else {
-    lcd.setCursor(5, 1);
-    lcd.print("Casual");
+    if (casual != lastDisplayedCasual) {
+      lcd.setCursor(5, 1);
+      lcd.print("Casual");
+      lastDisplayedCasual = casual;
+    }
   }
 
-	if (player1Minutes == 0 && player1Seconds <= 20) {
-	  lcd.setCursor(0, 1);
-    lcd.print(".");
-    lcd.print(10-centiCounter1);
-    lcd.setCursor(2, 1);
-    lcd.print(" ");
-  } else {
+  int p1LowTick = -1;
+  if (player1Minutes == 0 && player1Seconds <= 20) p1LowTick = 10 - centiCounter1;
+  if (p1LowTick != lastDisplayedP1LowTick) {
     lcd.setCursor(0, 1);
-    lcd.print("   ");
-  }
-	if (player2Minutes == 0 && player2Seconds <= 20) {
-	  lcd.setCursor(14, 1);
-    lcd.print(".");
-    lcd.print(10-centiCounter2);
-  } else {
-    lcd.setCursor(14, 1);
-    lcd.print("  ");
+    if (p1LowTick >= 0) {
+      lcd.print(".");
+      lcd.print(p1LowTick);
+      lcd.setCursor(2, 1);
+      lcd.print(" ");
+    } else {
+      lcd.print("   ");
+    }
+    lastDisplayedP1LowTick = p1LowTick;
   }
 
-  // Player 1 (White) time display
-  display1.clear();
-  display2.clear();
-	bool d1colon = true, d2colon = true;
+  int p2LowTick = -1;
+  if (player2Minutes == 0 && player2Seconds <= 20) p2LowTick = 10 - centiCounter2;
+  if (p2LowTick != lastDisplayedP2LowTick) {
+    lcd.setCursor(14, 1);
+    if (p2LowTick >= 0) {
+      lcd.print(".");
+      lcd.print(p2LowTick);
+    } else {
+      lcd.print("  ");
+    }
+    lastDisplayedP2LowTick = p2LowTick;
+  }
+
+  bool d1colon = true, d2colon = true;
   if (centiCounter1 < 5 && currentPlayer == 0) {
     d1colon = false;
   }
   if (centiCounter2 < 5 && currentPlayer == 1) {
     d2colon = false;
   }
-	setTime(player1Minutes, true, true);
+
+  // Player 1 (White) time display. No clear-before-redraw; only update if value or colon changed.
+  setTime(player1Minutes, true, true);
   setTime(player1Seconds, true, false);
-	if (d1colon)
-		display1.showNumberDecEx(convertArrtoInt(player1Time), 0b01000000, false);
-	else
-		display1.showNumberDecEx(convertArrtoInt(player1Time), 0b00000000, false);
-  
-  // Player 2 (Black) time display
-	setTime(player2Minutes, false, true);
-	setTime(player2Seconds, false, false);
-  if (d2colon)
-		display2.showNumberDecEx(convertArrtoInt(player2Time), 0b01000000, false);
-	else
-		display2.showNumberDecEx(convertArrtoInt(player2Time), 0b00000000, false);
+  showDisplayIfChanged(display1, convertArrtoInt(player1Time), d1colon ? 0b01000000 : 0b00000000,
+                       display1Blanked, lastDisplay1Value, lastDisplay1Colon);
+
+  // Player 2 (Black) time display. No clear-before-redraw; only update if value or colon changed.
+  setTime(player2Minutes, false, true);
+  setTime(player2Seconds, false, false);
+  showDisplayIfChanged(display2, convertArrtoInt(player2Time), d2colon ? 0b01000000 : 0b00000000,
+                       display2Blanked, lastDisplay2Value, lastDisplay2Colon);
 }
 
 // Sets the arrays player1Time and player2Time to the appropriate numbers
@@ -644,54 +816,136 @@ void setTime(int timeSetting, bool player1, bool minutes) {
   }
 }
 
+void resetForReplay() {
+  player1Minutes = clone1;
+  player1Seconds = clone1s;
+  player2Minutes = clone2;
+  player2Seconds = clone2s;
+  centiCounter1 = 0;
+  centiCounter2 = 0;
+  whiteWon = false;
+  blackWon = false;
+  gamePaused = false;
+  gameStarted = true;
+  buttonP1pressed = false;
+  buttonP2pressed = false;
+  buttonP3pressed = false;
+  lastClockTickMillis = millis();
+  lcd.clear();
+  resetGameLcdCache();
+  forceDisplayRefresh();
+  displayCurrentTime();
+}
+
+void resetAfterGameToSetup() {
+  gameRunning = false;
+  gamePaused = false;
+  gameStarted = true;
+  whiteWon = false;
+  blackWon = false;
+  pauseMenu = false;
+  player1Minutes = 0;
+  player1Seconds = 0;
+  player2Minutes = 0;
+  player2Seconds = 0;
+  centiCounter1 = 0;
+  centiCounter2 = 0;
+  setupPlayer = 0;
+  setupNumber = 0;
+  lcd.clear();
+  buttonP1pressed = false;
+  buttonP2pressed = false;
+  buttonP3pressed = false;
+  // Preserve the original reset behavior: clear Player 2's display and show 00:00 there.
+  blankDisplayIfNeeded(display2, display2Blanked, lastDisplay2Value, lastDisplay2Colon);
+  display2.showNumberDecEx(0000, 0b01000000, true);
+  display2Blanked = false;
+  lastDisplay2Value = 0;
+  lastDisplay2Colon = 0b01000000;
+  resetSetupDisplayCache();
+}
+
+void handleTimeoutEnd() {
+  // Keep the known timeout result on the LCD briefly, then play the same end melody once if enabled.
+  delay(500);
+  if (beepOn) {
+    for (int thisNote = 0; thisNote < 14; thisNote++) {
+      int noteDuration = 1000 / noteDurations[thisNote];
+      tone(buzzer, melody[thisNote], noteDuration);
+      int pauseBetweenNotes = noteDuration * 1.30;
+      delay(pauseBetweenNotes);
+      noTone(buzzer);
+    }
+    delay(500);
+    noTone(buzzer);
+  }
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Play again?");
+
+  bool checker3 = true;
+  get_ans(checker3);
+  if (!checker3) {
+    resetForReplay();
+  } else {
+    resetAfterGameToSetup();
+  }
+}
+
 void menuPause() {
+  unsigned long now = millis();
+
   if (!pauseMenu) {
     // Display "Game Paused" message
     lcd.setCursor(0, 0);
     lcd.print("Game Paused");
   }
-  if ((digitalRead(buttonP1) == HIGH) && (!pauseMenu)) {
+  if ((digitalRead(buttonP1) == HIGH) && (!pauseMenu) && (now - lastPauseButtonMillis >= DEBOUNCE_MS)) {
+    lastPauseButtonMillis = now;
     pauseMenu = true;
     setupPlayer = 0;
     setupNumber = 0;
     lcd.clear();
+    resetSetupDisplayCache();
     updateScreen();
-    delay(200); // Debounce delay
-  } else if ((digitalRead(buttonP3) == LOW) && (!pauseMenu)) { // Pause button is pressed to unpause the game
-  	gamePaused = false;
+  } else if ((digitalRead(buttonP3) == LOW) && (!pauseMenu) && (now - lastPauseButtonMillis >= DEBOUNCE_MS)) { // Pause button is pressed to unpause the game
+    lastPauseButtonMillis = now;
+    gamePaused = false;
     buttonP3pressed = false; // Ensure that the game isn't paused again in the advanceTime() function
+    lastClockTickMillis = millis();
     lcd.clear();
-    delay(200); // Debounce delay
-  } else if ((digitalRead(buttonP2) == HIGH) && (!pauseMenu)) {
-		delay(200); // Debounce delay
+    resetGameLcdCache();
+  } else if ((digitalRead(buttonP2) == HIGH) && (!pauseMenu) && (now - lastPauseButtonMillis >= DEBOUNCE_MS)) {
+    lastPauseButtonMillis = now;
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("Who won?");
-    delay(200); // Debounce delay
     bool checker3 = true;
-		get_ans(checker3);
-		if (!checker3) whiteGames++;
-		else blackGames++;
+    get_ans(checker3);
+    if (!checker3) whiteGames++;
+    else blackGames++;
     if (whiteGames != EEPROM.read(5)) EEPROM.write(5, whiteGames);
     if (blackGames != EEPROM.read(6)) EEPROM.write(6, blackGames);
-		
+
     lcd.clear();
-    delay(200);
     lcd.setCursor(0, 0);
     lcd.print("Play again?");
     checker3 = true;
-		get_ans(checker3);
-		if (!checker3) {
-			player1Minutes = clone1;
+    get_ans(checker3);
+    if (!checker3) {
+      player1Minutes = clone1;
       player1Seconds = clone1s;
       player2Minutes = clone2;
       player2Seconds = clone2s;
       gamePaused = false;
       gameStarted = true;
       lcd.clear();
+      resetGameLcdCache();
+      forceDisplayRefresh();
       displayCurrentTime();
-		} else {
-			gameRunning = false;
+    } else {
+      gameRunning = false;
       player1Minutes = 0;
       player1Seconds = 0;
       player2Minutes = 0;
@@ -699,25 +953,35 @@ void menuPause() {
       gamePaused = false;
       gameStarted = true;
       setupPlayer = 0;
-		  setupNumber = 0;
+      setupNumber = 0;
       lcd.clear();
       buttonP1pressed = false;
       buttonP2pressed = false;
-    	buttonP3pressed = false;
-  		// Clear Player 2 Screen
-      display2.clear();	
-			display2.showNumberDecEx(0000, 0b01000000, true);
-		}
-  
-    delay(200);
+      buttonP3pressed = false;
+      // Clear Player 2 Screen
+      blankDisplayIfNeeded(display2, display2Blanked, lastDisplay2Value, lastDisplay2Colon);
+      display2.showNumberDecEx(0000, 0b01000000, true);
+      display2Blanked = false;
+      lastDisplay2Value = 0;
+      lastDisplay2Colon = 0b01000000;
+      resetSetupDisplayCache();
+    }
   }
-  
+
   if (pauseMenu) {
-		checkButtons();
-		
+    if (now - lastPauseButtonMillis >= DEBOUNCE_MS) {
+      checkButtons();
+      editTime(false);
+      if (buttonP1pressed || buttonP2pressed || buttonP3pressed) {
+        lastPauseButtonMillis = now;
+      }
+    } else {
+      buttonP1pressed = false;
+      buttonP2pressed = false;
+      buttonP3pressed = false;
+    }
+
     updateScreen();
-    
-    editTime(false);
   }
 }
 
@@ -759,6 +1023,11 @@ void checkButtons() {
 
 void startingGame() {
 	gameRunning = true;
+  lastClockTickMillis = millis();
+  centiCounter1 = 0;
+  centiCounter2 = 0;
+  resetGameLcdCache();
+  forceDisplayRefresh();
 	      
 	if (player1Minutes == 0 && player1Seconds == 0) { // Sets player 1's time to 10 minutes if it's left blank
 	  player1Minutes = 10;
